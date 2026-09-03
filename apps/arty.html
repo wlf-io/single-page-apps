@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Right Triangle from Range</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml" />
   <style>
     :root {
       --bg: #0f1419;
@@ -46,24 +46,6 @@
     }
 
     h1 span { color: var(--muted); font-weight: 400; font-size: 0.9em; }
-
-    .back {
-      position: absolute;
-      top: 1.5rem;
-      left: 1.5rem;
-      font-size: 0.8rem;
-      color: var(--accent);
-      text-decoration: none;
-    }
-
-    .back:hover { text-decoration: underline; }
-
-    @media (max-width: 640px) {
-      .back {
-        position: static;
-        align-self: flex-start;
-      }
-    }
 
     .layout {
       display: flex;
@@ -243,7 +225,6 @@
   </style>
 </head>
 <body>
-  <a class="back" href="index.html">← Back</a>
   <h1>Arty Calc <span>· Ranging and Angle Calculation</span></h1>
 
   <div class="layout">
@@ -284,7 +265,7 @@
 
   <nav class="links">
     <a href="https://github.com/wlf-io/single-page-apps">GitHub</a>
-    <a href="LICENSE">MIT License</a>
+    <a href="../LICENSE">MIT License</a>
   </nav>
 
   <script>
@@ -779,6 +760,11 @@
 
     restorePoints();
     render();
+
+    if (window.self !== window.top) {
+      const title = document.querySelector("h1");
+      if (title) title.hidden = true;
+    }
   </script>
 </body>
 </html>

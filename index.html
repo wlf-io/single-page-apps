@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>wlf.io Single page apps</title>
-  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <title>wlf.io Apps</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <style>
     :root {
       --bg: #0f1419;
@@ -18,8 +18,9 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    html, body { height: 100%; }
+
     body {
-      min-height: 100vh;
       font-family: "Segoe UI", system-ui, sans-serif;
       background:
         radial-gradient(ellipse 80% 60% at 20% 10%, #1a2a3a 0%, transparent 50%),
@@ -28,24 +29,157 @@
       color: var(--text);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      padding: 1.5rem;
-      gap: 1.25rem;
     }
 
-    header {
+    body.menu-open { overflow: hidden; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.7rem 1rem;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      z-index: 50;
+      flex-shrink: 0;
+      min-height: 3.65rem;
+    }
+
+    .burger {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      width: 2.25rem;
+      height: 2.25rem;
+      padding: 0.45rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .burger span {
+      display: block;
+      height: 2px;
+      width: 100%;
+      background: var(--text);
+      border-radius: 1px;
+    }
+
+    .burger:hover,
+    .burger:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      outline: none;
+    }
+
+    .topbar h1 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-app {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      max-width: min(36rem, calc(100% - 28rem));
+      pointer-events: none;
+    }
+
+    .topbar-app-name {
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-app-blurb {
+      margin-top: 0.1rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .topbar-actions {
+      margin-left: auto;
+      display: none;
+      align-items: center;
+      gap: 0.45rem;
+      flex-shrink: 0;
+    }
+
+    body.app-open .topbar-actions { display: flex; }
+
+    .topbar-btn {
+      font-family: inherit;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.4rem 0.7rem;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .topbar-btn:hover,
+    .topbar-btn:focus-visible {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+      outline: none;
+    }
+
+    .page {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 0.35rem;
-      text-align: center;
+      padding: 1.5rem;
+      gap: 1.25rem;
+      flex: 1;
+      min-height: 0;
+      min-width: 0;
     }
 
-    h1 {
-      font-size: 1.35rem;
-      font-weight: 600;
-      letter-spacing: 0.02em;
+    .page.app-open {
+      padding: 0;
+      align-items: stretch;
     }
+
+    .home {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      width: 100%;
+    }
+
+    .page.app-open .home { display: none; }
+
+    .app-frame {
+      display: none;
+      flex: 1;
+      width: 100%;
+      border: 0;
+      background: var(--bg);
+    }
+
+    .page.app-open .app-frame { display: block; }
 
     .subtitle {
       color: var(--muted);
@@ -70,7 +204,8 @@
       max-width: 520px;
     }
 
-    .panel h2 {
+    .panel h2,
+    .sidebar h2 {
       font-size: 0.75rem;
       text-transform: uppercase;
       letter-spacing: 0.08em;
@@ -129,32 +264,241 @@
     }
 
     .links a:hover { text-decoration: underline; }
+
+    .workspace {
+      position: relative;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+    }
+
+    .scrim {
+      position: absolute;
+      inset: 0;
+      background: rgba(8, 12, 16, 0.55);
+      z-index: 30;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .sidebar {
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      height: auto;
+      width: min(300px, 86vw);
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 1.1rem 1.1rem 1.5rem;
+      z-index: 40;
+      transform: translateX(-100%);
+      transition: transform 0.2s ease;
+      overflow-y: auto;
+    }
+
+    body.menu-open .scrim {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    body.menu-open .sidebar {
+      transform: translateX(0);
+    }
   </style>
 </head>
 <body>
-  <header>
-    <h1>wlf.io Single page apps</h1>
-    <p class="subtitle">Small self contained tools</p>
+  <header class="topbar">
+    <button class="burger" type="button" aria-label="Open app menu" aria-expanded="false" aria-controls="sidebar">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <h1>wlf.io Apps</h1>
+    <div class="topbar-app" hidden>
+      <p class="topbar-app-name"></p>
+      <p class="topbar-app-blurb"></p>
+    </div>
+    <nav class="topbar-actions" hidden>
+      <a class="topbar-btn topbar-open" href="#">Open page</a>
+      <button class="topbar-btn topbar-download" type="button">Download</button>
+    </nav>
   </header>
-  <p class="intro">
-    A handful of single-file web apps with no external dependencies, so they can be opened locally or hosted anywhere.
-  </p>
 
-  <div class="panel">
+  <div class="workspace">
+  <div class="scrim" hidden></div>
+  <aside id="sidebar" class="sidebar" aria-hidden="true">
     <h2>Apps</h2>
-    <ul class="apps">
-      <li>
-        <a href="arty.html">
-          <span class="name">Arty Calc</span>
-          <span class="blurb">Trig range and angle calculator, meant for artillery in games.</span>
-        </a>
-      </li>
-    </ul>
+    <ul id="sidebar-apps" class="apps"></ul>
+  </aside>
+
+  <div class="page">
+    <div class="home">
+    <p class="subtitle">Small self contained tools</p>
+    <p class="intro">
+      A handful of single-file web apps with no external dependencies, so they can be opened locally or hosted anywhere.
+    </p>
+
+    <div class="panel">
+      <h2>Apps</h2>
+      <ul id="home-apps" class="apps"></ul>
+    </div>
+
+    <nav class="links">
+      <a href="https://github.com/wlf-io/single-page-apps">GitHub</a>
+      <a href="LICENSE">MIT License</a>
+    </nav>
+    </div>
+    <iframe class="app-frame" title="App" hidden></iframe>
+  </div>
   </div>
 
-  <nav class="links">
-    <a href="https://github.com/wlf-io/single-page-apps">GitHub</a>
-    <a href="LICENSE">MIT License</a>
-  </nav>
+  <script type="application/json" id="apps-data">
+    [
+      {
+        "id": "arty",
+        "name": "Arty Calc",
+        "href": "apps/arty.html",
+        "blurb": "Trig range and angle calculator, meant for artillery in games."
+      }
+    ]
+  </script>
+  <script>
+    const apps = JSON.parse(document.getElementById("apps-data").textContent);
+
+    function appItem(app) {
+      const li = document.createElement("li");
+      li.dataset.id = app.id;
+      const a = document.createElement("a");
+      a.href = app.href;
+      const name = document.createElement("span");
+      name.className = "name";
+      name.textContent = app.name;
+      const blurb = document.createElement("span");
+      blurb.className = "blurb";
+      blurb.textContent = app.blurb;
+      a.append(name, blurb);
+      li.append(a);
+      return li;
+    }
+
+    function fillList(el) {
+      el.replaceChildren(...apps.map(appItem));
+    }
+
+    fillList(document.getElementById("sidebar-apps"));
+    fillList(document.getElementById("home-apps"));
+
+    const burger = document.querySelector(".burger");
+    const scrim = document.querySelector(".scrim");
+    const sidebar = document.getElementById("sidebar");
+
+    function setMenu(open) {
+      document.body.classList.toggle("menu-open", open);
+      burger.setAttribute("aria-expanded", String(open));
+      burger.setAttribute("aria-label", open ? "Close app menu" : "Open app menu");
+      sidebar.setAttribute("aria-hidden", String(!open));
+      scrim.hidden = !open;
+    }
+
+    burger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setMenu(!document.body.classList.contains("menu-open"));
+    });
+    sidebar.addEventListener("mouseleave", () => setMenu(false));
+    scrim.addEventListener("click", () => setMenu(false));
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setMenu(false);
+    });
+
+    const page = document.querySelector(".page");
+    const frame = document.querySelector(".app-frame");
+    const topbarApp = document.querySelector(".topbar-app");
+    const topbarAppName = document.querySelector(".topbar-app-name");
+    const topbarAppBlurb = document.querySelector(".topbar-app-blurb");
+    const topbarActions = document.querySelector(".topbar-actions");
+    const topbarOpen = document.querySelector(".topbar-open");
+    const topbarDownload = document.querySelector(".topbar-download");
+
+    function setTopbarApp(app) {
+      if (!app) {
+        topbarApp.hidden = true;
+        topbarActions.hidden = true;
+        topbarOpen.removeAttribute("href");
+        topbarAppName.textContent = "";
+        topbarAppBlurb.textContent = "";
+        document.body.classList.remove("app-open");
+        return;
+      }
+      topbarAppName.textContent = app.name;
+      topbarAppBlurb.textContent = app.blurb;
+      topbarOpen.href = app.href;
+      topbarApp.hidden = false;
+      topbarActions.hidden = false;
+      document.body.classList.add("app-open");
+    }
+
+    function hashId() {
+      return decodeURIComponent(location.hash.replace(/^#/, ""));
+    }
+
+    function appById(id) {
+      return apps.find((app) => app.id === id);
+    }
+
+    function closeApp() {
+      page.classList.remove("app-open");
+      frame.hidden = true;
+      frame.removeAttribute("src");
+      delete frame.dataset.appId;
+      setTopbarApp(null);
+    }
+
+    function openApp(app, { updateHash = true } = {}) {
+      if (!app) return;
+      frame.hidden = false;
+      if (frame.dataset.appId !== app.id) {
+        frame.src = app.href;
+        frame.dataset.appId = app.id;
+      }
+      page.classList.add("app-open");
+      setTopbarApp(app);
+      setMenu(false);
+      if (updateHash && hashId() !== app.id) {
+        location.hash = app.id;
+      }
+    }
+
+    function restoreFromHash() {
+      const app = appById(hashId());
+      if (app) openApp(app, { updateHash: false });
+      else closeApp();
+    }
+
+    document.querySelectorAll("#sidebar-apps a[href], #home-apps a[href]").forEach((link) => {
+      link.addEventListener("click", (e) => {
+        e.preventDefault();
+        openApp(appById(link.closest("li")?.dataset.id));
+      });
+    });
+
+    window.addEventListener("hashchange", restoreFromHash);
+    restoreFromHash();
+
+    topbarDownload.addEventListener("click", async () => {
+      const app = appById(hashId()) || appById(frame.dataset.appId);
+      if (!app) return;
+      const res = await fetch(app.href);
+      if (!res.ok) return;
+      const blob = new Blob([await res.text()], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = app.href.split("/").pop() || `${app.id}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  </script>
 </body>
 </html>
