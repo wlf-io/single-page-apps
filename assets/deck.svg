@@ -1,0 +1,957 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="952" height="384" viewBox="0 0 952 384">
+  <defs>
+    <symbol id="spade" viewBox="0 0 64 64"><g fill="#e8eef4" transform="translate(8 8) scale(0.48)"><path d="M50 0 C50 0 4 42 4 66 C4 82 18 92 32 92 C36 92 35 100 30 110 H70 C65 100 64 92 68 92 C82 92 96 82 96 66 C96 42 50 0 50 0 Z"/></g></symbol>
+    <symbol id="heart" viewBox="0 0 64 64"><g fill="#a1283c" transform="translate(8 8) scale(0.48)"><path d="M50 96 L44 89 C20 66 2 52 2 32 C2 16 16 4 32 4 C42 4 48 12 50 12 C52 12 58 4 68 4 C84 4 98 16 98 32 C98 52 80 66 56 89 L50 96 Z"/></g></symbol>
+    <symbol id="club" viewBox="0 0 64 64"><g fill="#e8eef4" transform="translate(8 8) scale(0.48)"><circle cx="50" cy="28" r="22"/><circle cx="26" cy="58" r="22"/><circle cx="74" cy="58" r="22"/><circle cx="50" cy="55" r="18"/><path d="M42 70 C40 80 34 92 28 98 H72 C66 92 60 80 58 70 Z"/></g></symbol>
+    <symbol id="diamond" viewBox="0 0 64 64"><g fill="#a1283c" transform="translate(8 8) scale(0.48)"><path d="M50 4 L96 50 L50 96 L4 50 Z"/></g></symbol>
+    <pattern id="card-back" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#1a222c"/>
+      <rect width="6" height="6" fill="#3d9cf0"/>
+      <rect x="6" y="6" width="6" height="6" fill="#3d9cf0"/>
+    </pattern>
+    <pattern id="card-back-red" width="12" height="12" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="12" fill="#1a222c"/>
+      <rect width="6" height="6" fill="#a1283c"/>
+      <rect x="6" y="6" width="6" height="6" fill="#a1283c"/>
+    </pattern>
+  </defs>
+  <g transform="translate(4 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="16" y="30" width="28" height="32"/>
+  </g>
+  <g transform="translate(72 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="23.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#spade" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(140 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="23.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#spade" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(208 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#spade" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#spade" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(276 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#spade" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#spade" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(344 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#spade" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#spade" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(412 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#spade" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#spade" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#spade" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(480 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#spade" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#spade" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 54)"><use href="#spade" x="23.0" y="47.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 62)"><use href="#spade" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#spade" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(548 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#spade" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="29.0" width="14" height="14"/>
+    <use href="#spade" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#spade" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#spade" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#spade" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#spade" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(616 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#spade" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#spade" x="23.0" y="22.0" width="14" height="14"/>
+    <use href="#spade" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#spade" x="36.0" y="29.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#spade" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#spade" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 30 59)"><use href="#spade" x="23.0" y="52.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#spade" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#spade" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(684 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">J</text>
+  </g>
+  <g transform="translate(752 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">Q</text>
+  </g>
+  <g transform="translate(820 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#spade" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">K</text>
+  </g>
+  <g transform="translate(888 4)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Jo</text>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Jo</text>
+      </g>
+    </g>
+    <text x="30" y="48" text-anchor="middle" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="600">Jo</text>
+  </g>
+  <g transform="translate(4 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="16" y="30" width="28" height="32"/>
+  </g>
+  <g transform="translate(72 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="23.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#heart" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(140 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="23.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#heart" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(208 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#heart" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#heart" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(276 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#heart" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#heart" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(344 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#heart" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#heart" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(412 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#heart" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#heart" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#heart" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(480 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#heart" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#heart" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 54)"><use href="#heart" x="23.0" y="47.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 62)"><use href="#heart" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#heart" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(548 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#heart" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="29.0" width="14" height="14"/>
+    <use href="#heart" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#heart" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#heart" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#heart" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#heart" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(616 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#heart" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#heart" x="23.0" y="22.0" width="14" height="14"/>
+    <use href="#heart" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#heart" x="36.0" y="29.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#heart" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#heart" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 30 59)"><use href="#heart" x="23.0" y="52.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#heart" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#heart" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(684 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">J</text>
+  </g>
+  <g transform="translate(752 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">Q</text>
+  </g>
+  <g transform="translate(820 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#heart" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">K</text>
+  </g>
+  <g transform="translate(888 100)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Jo</text>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Jo</text>
+      </g>
+    </g>
+    <text x="30" y="48" text-anchor="middle" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="16" font-weight="600">Jo</text>
+  </g>
+  <g transform="translate(4 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="16" y="30" width="28" height="32"/>
+  </g>
+  <g transform="translate(72 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="23.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#club" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(140 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="23.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#club" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(208 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#club" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#club" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(276 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#club" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#club" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(344 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#club" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#club" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(412 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#club" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#club" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#club" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(480 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#club" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#club" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 54)"><use href="#club" x="23.0" y="47.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 62)"><use href="#club" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#club" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(548 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#club" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="29.0" width="14" height="14"/>
+    <use href="#club" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#club" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#club" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#club" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#club" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(616 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#club" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#club" x="23.0" y="22.0" width="14" height="14"/>
+    <use href="#club" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#club" x="36.0" y="29.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#club" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#club" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 30 59)"><use href="#club" x="23.0" y="52.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#club" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#club" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(684 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">J</text>
+  </g>
+  <g transform="translate(752 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">Q</text>
+  </g>
+  <g transform="translate(820 196)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#club" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#e8eef4" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">K</text>
+  </g>
+  <g transform="translate(888 196)">
+    <rect width="60" height="88" rx="7" fill="url(#card-back)" stroke="#2c3a4a"/>
+  </g>
+  <g transform="translate(4 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">A</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="16" y="30" width="28" height="32"/>
+  </g>
+  <g transform="translate(72 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">2</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="23.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#diamond" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(140 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">3</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="23.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 62)"><use href="#diamond" x="23.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(208 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">4</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="19.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#diamond" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#diamond" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(276 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">5</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#diamond" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#diamond" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(344 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">6</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#diamond" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#diamond" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(412 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">7</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#diamond" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 62)"><use href="#diamond" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#diamond" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(480 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">8</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="10.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="19.0" width="14" height="14"/>
+    <use href="#diamond" x="23.0" y="27.0" width="14" height="14"/>
+    <use href="#diamond" x="10.0" y="37.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 30 54)"><use href="#diamond" x="23.0" y="47.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 62)"><use href="#diamond" x="10.0" y="55.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 62)"><use href="#diamond" x="36.0" y="55.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(548 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">9</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#diamond" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="29.0" width="14" height="14"/>
+    <use href="#diamond" x="23.0" y="37.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#diamond" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#diamond" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#diamond" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#diamond" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(616 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="9" font-weight="600">10</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <use href="#diamond" x="10.0" y="15.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="15.0" width="14" height="14"/>
+    <use href="#diamond" x="23.0" y="22.0" width="14" height="14"/>
+    <use href="#diamond" x="10.0" y="29.0" width="14" height="14"/>
+    <use href="#diamond" x="36.0" y="29.0" width="14" height="14"/>
+    <g transform="rotate(180 17 52)"><use href="#diamond" x="10.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 52)"><use href="#diamond" x="36.0" y="45.0" width="14" height="14"/></g>
+    <g transform="rotate(180 30 59)"><use href="#diamond" x="23.0" y="52.0" width="14" height="14"/></g>
+    <g transform="rotate(180 17 66)"><use href="#diamond" x="10.0" y="59.0" width="14" height="14"/></g>
+    <g transform="rotate(180 43 66)"><use href="#diamond" x="36.0" y="59.0" width="14" height="14"/></g>
+  </g>
+  <g transform="translate(684 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">J</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">J</text>
+  </g>
+  <g transform="translate(752 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">Q</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">Q</text>
+  </g>
+  <g transform="translate(820 292)">
+    <rect width="60" height="88" rx="7" fill="#1a222c" stroke="#2c3a4a"/>
+    <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+    </g>
+    <g transform="rotate(180 30.0 44.0)">
+      <g>
+      <text x="5" y="12" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="11" font-weight="600">K</text>
+      <use href="#diamond" x="4.5" y="13" width="9" height="10"/>
+      </g>
+    </g>
+    <text x="30" y="54" text-anchor="middle" fill="#a1283c" font-family="Segoe UI, system-ui, sans-serif" font-size="28" font-weight="600">K</text>
+  </g>
+  <g transform="translate(888 292)">
+    <rect width="60" height="88" rx="7" fill="url(#card-back-red)" stroke="#2c3a4a"/>
+  </g>
+</svg>

@@ -213,6 +213,10 @@
       margin-bottom: 0.85rem;
     }
 
+    .app-section + .app-section {
+      margin-top: 1.1rem;
+    }
+
     .apps {
       list-style: none;
       display: grid;
@@ -350,8 +354,7 @@
   <div class="scrim" hidden></div>
   <aside id="sidebar" class="sidebar" aria-hidden="true">
     <a class="sidebar-home" href="index.html">Home</a>
-    <h2>Apps</h2>
-    <ul id="sidebar-apps" class="apps"></ul>
+    <div id="sidebar-apps"></div>
   </aside>
 
   <div class="page">
@@ -361,10 +364,7 @@
       A handful of single-file web apps with no external dependencies, so they can be opened locally or hosted anywhere.
     </p>
 
-    <div class="panel">
-      <h2>Apps</h2>
-      <ul id="home-apps" class="apps"></ul>
-    </div>
+    <div class="panel" id="home-apps"></div>
 
     <nav class="links">
       <a href="https://github.com/wlf-io/single-page-apps">GitHub</a>
@@ -381,12 +381,45 @@
         "id": "arty",
         "name": "Arty Calc",
         "href": "apps/arty.html",
-        "blurb": "Trig range and angle calculator, meant for artillery in games."
+        "blurb": "Trig range and angle calculator, meant for artillery in games.",
+        "debug": false,
+        "category": "tools"
+      },
+      {
+        "id": "template",
+        "name": "Template",
+        "href": "template.html",
+        "blurb": "Empty app layout to copy when starting a new tool.",
+        "debug": true,
+        "category": "debug"
+      },
+      {
+        "id": "solitaire",
+        "name": "Solitaire",
+        "href": "games/solitaire.html",
+        "blurb": "Klondike solitaire.",
+        "debug": false,
+        "category": "games"
       }
     ]
   </script>
   <script>
     const apps = JSON.parse(document.getElementById("apps-data").textContent);
+
+    function hostedLocally() {
+      const host = location.hostname;
+      return location.protocol === "file:"
+        || host === "localhost"
+        || host === "127.0.0.1"
+        || host === "[::1]"
+        || host.endsWith(".localhost");
+    }
+
+    function isListed(app) {
+      return Boolean(app) && (!app.debug || hostedLocally());
+    }
+
+    const listedApps = apps.filter(isListed);
 
     function appItem(app) {
       const li = document.createElement("li");
@@ -405,7 +438,24 @@
     }
 
     function fillList(el) {
-      el.replaceChildren(...apps.map(appItem));
+      const groups = new Map();
+      for (const app of listedApps) {
+        const cat = app.category || "apps";
+        if (!groups.has(cat)) groups.set(cat, []);
+        groups.get(cat).push(app);
+      }
+      const cats = [...groups.keys()].sort((a, b) => a.localeCompare(b));
+      el.replaceChildren(...cats.map((cat) => {
+        const section = document.createElement("section");
+        section.className = "app-section";
+        const heading = document.createElement("h2");
+        heading.textContent = cat;
+        const list = document.createElement("ul");
+        list.className = "apps";
+        list.append(...groups.get(cat).map(appItem));
+        section.append(heading, list);
+        return section;
+      }));
     }
 
     fillList(document.getElementById("sidebar-apps"));
@@ -477,7 +527,7 @@
     }
 
     function openApp(app, { updateHash = true } = {}) {
-      if (!app) return;
+      if (!isListed(app)) return;
       frame.hidden = false;
       if (frame.dataset.appId !== app.id) {
         frame.src = app.href;
@@ -493,7 +543,7 @@
 
     function restoreFromHash() {
       const app = appById(hashId());
-      if (app) openApp(app, { updateHash: false });
+      if (isListed(app)) openApp(app, { updateHash: false });
       else closeApp();
     }
 

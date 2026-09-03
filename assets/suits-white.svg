@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <g fill="#ffffff" transform="translate(8 8) scale(0.48)">
+    <path d="M50 0 C50 0 4 42 4 66 C4 82 18 92 32 92 C36 92 35 100 30 110 H70 C65 100 64 92 68 92 C82 92 96 82 96 66 C96 42 50 0 50 0 Z"/>
+  </g>
+  <g fill="#ffffff" transform="translate(72 8) scale(0.48)">
+    <path d="M50 96 L44 89 C20 66 2 52 2 32 C2 16 16 4 32 4 C42 4 48 12 50 12 C52 12 58 4 68 4 C84 4 98 16 98 32 C98 52 80 66 56 89 L50 96 Z"/>
+  </g>
+  <g fill="#ffffff" transform="translate(8 72) scale(0.48)">
+    <circle cx="50" cy="28" r="22"/>
+    <circle cx="26" cy="58" r="22"/>
+    <circle cx="74" cy="58" r="22"/>
+    <circle cx="50" cy="55" r="18"/>
+    <path d="M42 70 C40 80 34 92 28 98 H72 C66 92 60 80 58 70 Z"/>
+  </g>
+  <g fill="#ffffff" transform="translate(72 72) scale(0.48)">
+    <path d="M50 4 L96 50 L50 96 L4 50 Z"/>
+  </g>
+</svg>
