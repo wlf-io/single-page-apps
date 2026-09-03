@@ -46,6 +46,24 @@
 
     h1 span { color: var(--muted); font-weight: 400; font-size: 0.9em; }
 
+    .back {
+      position: absolute;
+      top: 1.5rem;
+      left: 1.5rem;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .back:hover { text-decoration: underline; }
+
+    @media (max-width: 640px) {
+      .back {
+        position: static;
+        align-self: flex-start;
+      }
+    }
+
     .layout {
       display: flex;
       flex-wrap: wrap;
@@ -206,9 +224,25 @@
       text-align: center;
       line-height: 1.4;
     }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem 1.25rem;
+      font-size: 0.8rem;
+    }
+
+    .links a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .links a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
+  <a class="back" href="index.html">← Back</a>
   <h1>Arty Calc <span>· Ranging and Angle Calculation</span></h1>
 
   <div class="layout">
@@ -246,6 +280,11 @@
       <canvas id="c" width="720" height="720"></canvas>
     </div>
   </div>
+
+  <nav class="links">
+    <a href="https://github.com/wlf-io/single-page-apps">GitHub</a>
+    <a href="LICENSE">MIT License</a>
+  </nav>
 
   <script>
     const VIEW_PAD = 10; // world units of padding around the triangle
