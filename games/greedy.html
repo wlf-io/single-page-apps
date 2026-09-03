@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Greedy</title>
+  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPCEtLSBFcXVhbC1lZGdlIGlzb21ldHJpYyBjdWJlOiAzMMKwIHJob21iaSwgdmVydGljYWwgPSBlZGdlIGxlbmd0aCAtLT4KICA8cGF0aCBmaWxsPSIjM2Q5Y2YwIiBkPSJNMTYgNCAyNi4zOTIgMTAgMTYgMTYgNS42MDggMTBaIi8+CiAgPHBhdGggZmlsbD0iIzJhNmZhZCIgZD0iTTUuNjA4IDEwIDE2IDE2djEybC0xMC4zOTItNloiLz4KICA8cGF0aCBmaWxsPSIjMWU0ZjgyIiBkPSJNMjYuMzkyIDEwIDE2IDE2djEybDEwLjM5Mi02WiIvPgo8L3N2Zz4K" type="image/svg+xml" />
+  <style>
+    :root {
+      --bg: #0f1419;
+      --text: #e8eef4;
+      --muted: #8a9aab;
+      --accent: #3d9cf0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 10%, #1a2a3a 0%, transparent 50%),
+        radial-gradient(ellipse 60% 50% at 90% 80%, #1a2830 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem;
+      gap: 1.25rem;
+    }
+
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    h1 span { color: var(--muted); font-weight: 400; font-size: 0.9em; }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.75rem 1.25rem;
+      font-size: 0.8rem;
+    }
+
+    .links a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .links a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <h1>Greedy <span></span></h1>
+
+  <div class="content">
+  </div>
+
+  <nav class="links">
+    <a href="https://github.com/wlf-io/single-page-apps">GitHub</a>
+    <a href="../LICENSE">MIT License</a>
+  </nav>
+
+  <script>
+    if (window.self !== window.top) {
+      const title = document.querySelector("h1");
+      if (title) title.hidden = true;
+    }
+  </script>
+</body>
+</html>
