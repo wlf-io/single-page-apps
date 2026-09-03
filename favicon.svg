@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Equal-edge isometric cube: 30° rhombi, vertical = edge length -->
+  <path fill="#3d9cf0" d="M16 4 26.392 10 16 16 5.608 10Z"/>
+  <path fill="#2a6fad" d="M5.608 10 16 16v12l-10.392-6Z"/>
+  <path fill="#1e4f82" d="M26.392 10 16 16v12l10.392-6Z"/>
+</svg>
