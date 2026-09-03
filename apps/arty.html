@@ -70,7 +70,26 @@
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .panel-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
       margin-bottom: 0.85rem;
+    }
+
+    .range-mult {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 0.2rem;
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
 
     .point-group {
@@ -143,6 +162,17 @@
       outline: none;
       border-color: var(--accent);
       box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .range-mult input {
+      width: 4.2rem;
+      padding: 0.25rem 0.35rem;
+      font-size: 0.8rem;
+    }
+
+    .range-mult {
+      flex-direction: row;
+      align-items: center;
     }
 
     .stats-details {
@@ -229,7 +259,12 @@
 
   <div class="layout">
     <aside class="panel">
-      <h2>Coordinates (m)</h2>
+      <div class="panel-head">
+        <h2>Coordinates (m)</h2>
+        <label class="range-mult">Range ×
+          <input id="range-mult" type="number" value="100" step="1" />
+        </label>
+      </div>
 
       <div class="point-group">
         <div class="point-label">Origin</div>
@@ -286,6 +321,12 @@
       bx: document.getElementById("bx"),
       by: document.getElementById("by"),
     };
+    const rangeMultInput = document.getElementById("range-mult");
+
+    function rangeMultiplier() {
+      const n = +rangeMultInput.value;
+      return Number.isFinite(n) ? n : 100;
+    }
 
     function readPoints() {
       return {
@@ -325,6 +366,7 @@
           ay: inputs.ay.value,
           bx: inputs.bx.value,
           by: inputs.by.value,
+          rangeMult: rangeMultInput.value,
         }),
       );
     }
@@ -339,6 +381,7 @@
           inputs.ay.value = data.ay;
           inputs.bx.value = data.bx;
           inputs.by.value = data.by;
+          if (data.rangeMult != null) rangeMultInput.value = data.rangeMult;
         } else if (data?.A && data?.B) {
           // legacy shape { A: {x,y}, B: {x,y} }
           inputs.ax.value = data.A.x;
@@ -630,9 +673,10 @@
       const legBC = dist(B, C); // horizontal |Bx - Ax|
       const hypAB = dist(A, B);
       const hypAngle = hypAngleFromVertical(A, B);
+      const rangeOut = hypAB * rangeMultiplier();
 
       if (legAC < 1e-9 || legBC < 1e-9) {
-        updateHypStats(hypAB, hypAngle);
+        updateHypStats(rangeOut, hypAngle);
         stats.innerHTML = `<span class="err">Degenerate: Origin and Target must differ in both x and y so an axis-aligned right triangle can form.</span>`;
         drawPoint(A, "Origin", "#3d9cf0");
         drawPoint(B, "Target", "#3d9cf0");
@@ -717,12 +761,12 @@
         ctx.fillText("90°", s.x + ox * 40, s.y + (oy > 0 ? -40 : 40));
       }
 
-      updateHypStats(hypAB, hypAngle);
+      updateHypStats(rangeOut, hypAngle);
 
       stats.innerHTML = `
         <div><strong>C</strong> (right angle) = (${fmt(C.x)}, ${fmt(C.y)}) m</div>
         <div>Leg AC = <strong>${fmt(legAC)} m</strong> · Leg BC = <strong>${fmt(legBC)} m</strong></div>
-        <div>Range = <strong>${fmt(hypAB)} m</strong></div>
+        <div>Range = <strong>${fmt(rangeOut)} m</strong></div>
         <div>∠Origin = <strong>${fmt(angA)}°</strong> · ∠Target = <strong>${fmt(angB)}°</strong> · ∠C = <strong>${fmt(angC)}°</strong></div>
       `;
     }
@@ -757,6 +801,11 @@
     inputs.ay.addEventListener("paste", (e) => onCoordPaste(e, inputs.ax, inputs.ay));
     inputs.bx.addEventListener("paste", (e) => onCoordPaste(e, inputs.bx, inputs.by));
     inputs.by.addEventListener("paste", (e) => onCoordPaste(e, inputs.bx, inputs.by));
+
+    rangeMultInput.addEventListener("input", () => {
+      savePoints();
+      render();
+    });
 
     restorePoints();
     render();
