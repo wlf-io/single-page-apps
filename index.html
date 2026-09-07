@@ -452,7 +452,7 @@
         if (!groups.has(cat)) groups.set(cat, []);
         groups.get(cat).push(app);
       }
-      const cats = [...groups.keys()].sort((a, b) => a.localeCompare(b));
+      const cats = groups.keys();
       el.replaceChildren(...cats.map((cat) => {
         const section = document.createElement("section");
         section.className = "app-section";

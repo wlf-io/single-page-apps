@@ -435,11 +435,11 @@
     function saveBoard(board) {
       const boardData = cloneBoard(board);
       boardData.version = version;
-      localStorage.setItem("board", JSON.stringify(boardData));
+      localStorage.setItem("solitaire-board", JSON.stringify(boardData));
     }
 
     function loadBoard() {
-      const savedBoard = localStorage.getItem("board");
+      const savedBoard = localStorage.getItem("solitaire-board");
       if (savedBoard) {
         const data = JSON.parse(savedBoard);
         if(data.version == version && false) {
