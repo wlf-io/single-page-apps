@@ -17,6 +17,7 @@
       --ok: #6fd0a0;
       --err: #f07070;
       --warn: #e0b060;
+      --hit: rgba(61, 156, 240, 0.38);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -176,20 +177,53 @@
       outline: none;
     }
 
-    textarea {
+    .editor {
+      position: relative;
       flex: 1;
-      width: 100%;
       min-height: 220px;
-      resize: none;
-      background: var(--bg);
+      min-width: 0;
+    }
+
+    .editor .hl,
+    .editor textarea {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      margin: 0;
       border: 1px solid var(--border);
       border-radius: 6px;
-      color: var(--text);
       padding: 0.7rem 0.75rem;
       font-family: ui-monospace, "Cascadia Code", "SFMono-Regular", Menlo, Consolas, monospace;
       font-size: 0.85rem;
       line-height: 1.45;
       tab-size: 2;
+      white-space: pre;
+      overflow: auto;
+      scrollbar-gutter: stable;
+    }
+
+    .editor .hl {
+      background: var(--bg);
+      color: transparent;
+      pointer-events: none;
+      scrollbar-width: none;
+    }
+
+    .editor .hl::-webkit-scrollbar { display: none; }
+
+    .editor .hl mark {
+      color: transparent;
+      background: var(--hit);
+      border-radius: 3px;
+    }
+
+    .editor textarea {
+      resize: none;
+      background: transparent;
+      color: var(--text);
+      caret-color: var(--text);
+      z-index: 1;
     }
 
     textarea:focus {
@@ -244,6 +278,18 @@
 
     tr:last-child td { border-bottom: none; }
 
+    #diff-body tr {
+      cursor: pointer;
+    }
+
+    #diff-body tr:hover td {
+      background: rgba(61, 156, 240, 0.08);
+    }
+
+    #diff-body tr.active td {
+      background: var(--accent-soft);
+    }
+
     .kind {
       font-size: 0.7rem;
       text-transform: uppercase;
@@ -297,14 +343,20 @@
           <h2>Left</h2>
           <button type="button" id="format-left">Format</button>
         </div>
-        <textarea id="left" spellcheck="false" placeholder="Paste JSON…"></textarea>
+        <div class="editor">
+          <pre class="hl" id="hl-left" aria-hidden="true"></pre>
+          <textarea id="left" wrap="off" spellcheck="false" placeholder="Paste JSON…"></textarea>
+        </div>
       </section>
       <section class="pane" id="pane-right">
         <div class="pane-head">
           <h2>Right</h2>
           <button type="button" id="format-right">Format</button>
         </div>
-        <textarea id="right" spellcheck="false" placeholder="Paste JSON…"></textarea>
+        <div class="editor">
+          <pre class="hl" id="hl-right" aria-hidden="true"></pre>
+          <textarea id="right" wrap="off" spellcheck="false" placeholder="Paste JSON…"></textarea>
+        </div>
       </section>
     </div>
 
@@ -332,6 +384,8 @@
   <script>
     const leftEl = document.getElementById("left");
     const rightEl = document.getElementById("right");
+    const hlLeft = document.getElementById("hl-left");
+    const hlRight = document.getElementById("hl-right");
     const orderEl = document.getElementById("order");
     const statusEl = document.getElementById("status");
     const diffsEl = document.getElementById("diffs");
@@ -382,6 +436,177 @@
       const byDepth = pathLength(a.path) - pathLength(b.path);
       if (byDepth) return byDepth;
       return a.path < b.path ? -1 : a.path > b.path ? 1 : 0;
+    }
+
+    function parsePath(path) {
+      const segs = [];
+      let i = path.startsWith("$") ? 1 : 0;
+      while (i < path.length) {
+        if (path[i] === ".") {
+          i++;
+          const start = i;
+          while (i < path.length && /[\w$]/.test(path[i])) i++;
+          segs.push(path.slice(start, i));
+        } else if (path[i] === "[") {
+          i++;
+          if (path[i] === '"') {
+            const start = i;
+            i++;
+            while (i < path.length) {
+              if (path[i] === "\\") { i += 2; continue; }
+              if (path[i] === '"') { i++; break; }
+              i++;
+            }
+            segs.push(JSON.parse(path.slice(start, i)));
+            if (path[i] === "]") i++;
+          } else {
+            const start = i;
+            while (i < path.length && path[i] !== "]") i++;
+            segs.push(Number(path.slice(start, i)));
+            if (path[i] === "]") i++;
+          }
+        } else {
+          i++;
+        }
+      }
+      return segs;
+    }
+
+    function skipWs(s, i) {
+      while (i < s.length && /\s/.test(s[i])) i++;
+      return i;
+    }
+
+    function skipString(s, i) {
+      i++;
+      while (i < s.length) {
+        if (s[i] === "\\") { i += 2; continue; }
+        if (s[i] === '"') return i + 1;
+        i++;
+      }
+      return i;
+    }
+
+    function skipValue(s, i) {
+      i = skipWs(s, i);
+      const c = s[i];
+      if (c === '"') return skipString(s, i);
+      if (c === "{" || c === "[") {
+        const close = c === "{" ? "}" : "]";
+        let depth = 1;
+        i++;
+        while (i < s.length && depth) {
+          const ch = s[i];
+          if (ch === '"') { i = skipString(s, i); continue; }
+          if (ch === c) depth++;
+          else if (ch === close) depth--;
+          i++;
+        }
+        return i;
+      }
+      while (i < s.length && /[^\s,\]}]/.test(s[i])) i++;
+      return i;
+    }
+
+    function locateValue(source, segs) {
+      let i = skipWs(source, 0);
+      for (const seg of segs) {
+        i = skipWs(source, i);
+        if (typeof seg === "number") {
+          if (source[i] !== "[") return null;
+          i++;
+          i = skipWs(source, i);
+          if (source[i] === "]") return null;
+          for (let n = 0; n < seg; n++) {
+            i = skipValue(source, i);
+            i = skipWs(source, i);
+            if (source[i] !== ",") return null;
+            i++;
+            i = skipWs(source, i);
+          }
+        } else {
+          if (source[i] !== "{") return null;
+          i++;
+          let found = false;
+          while (i < source.length) {
+            i = skipWs(source, i);
+            if (source[i] === "}" || source[i] !== '"') return null;
+            const keyStart = i;
+            const keyEnd = skipString(source, i);
+            let key;
+            try { key = JSON.parse(source.slice(keyStart, keyEnd)); }
+            catch { return null; }
+            i = skipWs(source, keyEnd);
+            if (source[i] !== ":") return null;
+            i++;
+            i = skipWs(source, i);
+            if (key === seg) {
+              found = true;
+              break;
+            }
+            i = skipValue(source, i);
+            i = skipWs(source, i);
+            if (source[i] !== ",") return null;
+            i++;
+          }
+          if (!found) return null;
+        }
+      }
+      const start = skipWs(source, i);
+      const end = skipValue(source, start);
+      return end > start ? { start, end } : null;
+    }
+
+    function paintHighlight(hl, text, range) {
+      if (!range) {
+        hl.textContent = text;
+        return;
+      }
+      const mark = document.createElement("mark");
+      mark.textContent = text.slice(range.start, range.end);
+      hl.replaceChildren(
+        document.createTextNode(text.slice(0, range.start)),
+        mark,
+        document.createTextNode(text.slice(range.end)),
+      );
+    }
+
+    function revealRange(ta, start) {
+      const cs = getComputedStyle(ta);
+      let lineHeight = parseFloat(cs.lineHeight);
+      if (!Number.isFinite(lineHeight)) lineHeight = parseFloat(cs.fontSize) * 1.45;
+      const padTop = parseFloat(cs.paddingTop) || 0;
+      const padLeft = parseFloat(cs.paddingLeft) || 0;
+      const pre = ta.value.slice(0, start);
+      const line = pre.split("\n").length - 1;
+      const col = start - (pre.lastIndexOf("\n") + 1);
+      const y = padTop + line * lineHeight;
+      const view = ta.clientHeight;
+      if (y < ta.scrollTop + lineHeight || y > ta.scrollTop + view - lineHeight * 2) {
+        ta.scrollTop = Math.max(0, y - view / 3);
+      }
+      const ch = parseFloat(cs.fontSize) * 0.62;
+      const x = padLeft + col * ch;
+      if (x < ta.scrollLeft + 24 || x > ta.scrollLeft + ta.clientWidth - 48) {
+        ta.scrollLeft = Math.max(0, x - 40);
+      }
+    }
+
+    function syncHighlightScroll(ta, hl) {
+      hl.scrollTop = ta.scrollTop;
+      hl.scrollLeft = ta.scrollLeft;
+    }
+
+    function highlightDiff(path, kind) {
+      const segs = parsePath(path);
+      const leftRange = kind === "added" ? null : locateValue(leftEl.value, segs);
+      const rightRange = kind === "removed" ? null : locateValue(rightEl.value, segs);
+      paintHighlight(hlLeft, leftEl.value, leftRange);
+      paintHighlight(hlRight, rightEl.value, rightRange);
+      if (leftRange) revealRange(leftEl, leftRange.start);
+      if (rightRange) revealRange(rightEl, rightRange.start);
+      syncHighlightScroll(leftEl, hlLeft);
+      syncHighlightScroll(rightEl, hlRight);
     }
 
     function deepEqual(a, b, orderMatters) {
@@ -497,6 +722,8 @@
       const orderMatters = orderEl.checked;
       paneLeft.classList.toggle("error", Boolean(left.error));
       paneRight.classList.toggle("error", Boolean(right.error));
+      paintHighlight(hlLeft, leftEl.value, null);
+      paintHighlight(hlRight, rightEl.value, null);
       diffBody.replaceChildren();
       diffsEl.hidden = true;
 
@@ -543,6 +770,9 @@
         const rightCell = document.createElement("td");
         rightCell.className = diff.right === undefined ? "empty" : "val";
         rightCell.textContent = diff.right === undefined ? "—" : preview(diff.right);
+        tr.dataset.path = diff.path;
+        tr.dataset.kind = diff.kind;
+        tr.tabIndex = 0;
         tr.append(kind, path, leftCell, rightCell);
         diffBody.append(tr);
       }
@@ -590,9 +820,18 @@
 
     leftEl.addEventListener("input", onPaneChange);
     rightEl.addEventListener("input", onPaneChange);
+    leftEl.addEventListener("scroll", () => syncHighlightScroll(leftEl, hlLeft));
+    rightEl.addEventListener("scroll", () => syncHighlightScroll(rightEl, hlRight));
     orderEl.addEventListener("change", onPaneChange);
     document.getElementById("format-left").addEventListener("click", () => formatPane(leftEl));
     document.getElementById("format-right").addEventListener("click", () => formatPane(rightEl));
+    diffBody.addEventListener("click", (e) => {
+      const tr = e.target.closest("tr");
+      if (!tr?.dataset.path) return;
+      for (const row of diffBody.querySelectorAll("tr.active")) row.classList.remove("active");
+      tr.classList.add("active");
+      highlightDiff(tr.dataset.path, tr.dataset.kind);
+    });
 
     restoreState();
     render();
