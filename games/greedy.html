@@ -466,7 +466,7 @@
     <a href="../LICENSE">MIT License</a>
   </nav>
 
-  <dialog id="modal">
+  <dialog id="dice-pick-modal">
     <div id="wild-pick" class="dice dice-3">
       <div class="slot"><div data-val="1" class="die white"></div></div>
       <div class="slot"><div data-val="2" class="die white"></div></div>
@@ -475,6 +475,15 @@
       <div class="slot"><div data-val="5" class="die white"></div></div>
       <div class="slot"><div data-val="6" class="die white"></div></div>
     </div>
+  </dialog>
+
+  <dialog id="score-modal">
+    <h2>Score: <span id="score"></span></h2>
+  </dialog>
+
+  <dialog id="scores-modal">
+    <h2>Scores</h2>
+    <ul id="scores"></ul>
   </dialog>
 
   <script>
@@ -534,15 +543,22 @@
     const bankedPoints = document.getElementById("banked-points");
     const points = document.getElementById("points");
     const feedback = document.getElementById("feedback");
-    const modal = document.getElementById("modal");
+    const dicePickModal = document.getElementById("dice-pick-modal");
+    const scoresModal = document.getElementById("scores-modal");
+    const scoresDisplay = document.getElementById("scores");
+    const scoreModal = document.getElementById("score-modal");
+    const scoreDisplay = document.getElementById("score");
 
     let dieVals = [DICE_VAL_1, DICE_VAL_2, DICE_VAL_3, DICE_VAL_4, DICE_VAL_5, DICE_VAL_6];
     let dieStates = [DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE];
     let banked = 0;
     let score = 0;
+    let busts = 0;
     let started = false;
+    let gameOver = true;
     let zilches = 0;
     let turns = 0;
+    let scores = [];
 
     function clearDice() {
       dieStates = [DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE, DICE_STATE_NONE];
@@ -611,12 +627,29 @@
       }
     }
 
-    function openModal() {
-      modal.showModal();
+    function openDicePickModal() {
+      dicePickModal.showModal();
     }
 
-    function closeModal() {
-      modal.close();
+    function closeDicePickModal() {
+      dicePickModal.close();
+    }
+
+    function openScoresModal() {
+      scoresModal.showModal();
+    }
+
+    function closeScoresModal() {
+      scoresModal.close();
+    }
+
+    function openScoreModal(score) {
+      scoreDisplay.textContent = score.toString();
+      scoreModal.showModal();
+    }
+
+    function closeScoreModal() {
+      scoreModal.close();
     }
 
     function render() {
@@ -629,7 +662,7 @@
       plusBtn.disabled = !started;
       renderPoints(bankedPoints, banked);
       const picked = getPickedDice();
-      const pickedScore = scoreSelection(picked);
+      const pickedScore = isValidDiceSelection(picked) ? scoreSelection(picked) : 0;
       renderPoints(points, score + pickedScore);
       renderLives();
     }
@@ -646,8 +679,6 @@
       const title = document.querySelector("h1");
       if (title) title.hidden = true;
     }
-
-    render();
 
     function getDiceAtState(state) {
       const dice = [];
@@ -720,50 +751,52 @@
   
     function checkSpecialHands(picked, reduce) {
       reduce = reduce || false;
-      const values = countUpSelectionValues(picked);
-      const getCounted = (values) => values.filter(val => val > 0);
+      const counted = countUpSelectionValues(picked);
+      const sorted = [...counted];
+      sorted.sort();
+      const getFiltered = (values) => values.filter(val => val > 0);
       const getUnique = (values) => values.filter((val,i) => values.indexOf(val) == i).sort();
       
 
-      let counted = getCounted(values);
-      let unique = getUnique(counted);
+      let filtered = getFiltered(counted);
+      let unique = getUnique(filtered);
 
-      if(counted.length == 6 && unique.length == 1 && unique[0] == 1) {
+      if(filtered.length == 6 && unique.length == 1 && unique[0] == 1) {
         return true;
       }
 
-      if(counted.length == 5) {
+      if(filtered.length == 5) {
         if(reduce) return true;
         if(unique.length == 1) {
-          return unique[0] == 1 && (values[0] == 0 || values[5] == 0);
+          return unique[0] == 1 && (counted[0] == 0 || counted[5] == 0);
         } else if(unique.length == 2 && unique[0] == 1 && unique[1] == 2) {
-          return values[0] == 2 || values[4] == 2;
+          return counted[0] == 2 || counted[4] == 2;
         } else {
           return false;
         }
       }
 
-      if(counted.length == 5 && (reduce || (unique.length == 1 && unique[0] == 1 && (values[0] == 0 || values[6] == 0)))) {
+      if(filtered.length == 5 && (reduce || (unique.length == 1 && unique[0] == 1 && (counted[0] == 0 || counted[6] == 0)))) {
         return true;
       }
 
-      if(counted.length == 2 && unique.length == 2 && unique[0] == 2 && unique[1] == 4) {
+      if(filtered.length == 2 && unique.length == 2 && unique[0] == 2 && unique[1] == 4) {
         return true;
       }
 
-      if(counted.length == 3 && unique.length == 1 && unique[0] == 2) {
+      if(filtered.length == 3 && unique.length == 1 && unique[0] == 2) {
         return true;
       }
 
-      const minusOnesAndFives = [values[1], values[2], values[3], values[5]];
-      counted = getCounted(minusOnesAndFives);
+      const minusOnesAndFives = [counted[1], counted[2], counted[3], counted[5]];
+      filtered = getFiltered(minusOnesAndFives);
 
       if(reduce) {
-        if(counted[counted.length - 1] >= 3) {
+        if(sorted[sorted.length - 1] >= 3) {
           return true;
         }
       } else {
-        if(counted.length == 1 && counted[0] >= 3) {
+        if(filtered.length == 1 && filtered[0] >= 3) {
           return true;
         }
       }
@@ -824,7 +857,7 @@
       return true;
     }
 
-    function hasValidDiceSelection(selection) {
+    function hasValidDiceSelection(selection, reduce) {
       if(selection.length < 1) return false;
       const valid = getAlwaysValidPickedDiceValues();
       for(const index of selection) {
@@ -832,7 +865,7 @@
           return true;
         }
       }
-      return checkSpecialHands(selection, true);
+      return checkSpecialHands(selection, reduce);
     }
 
     function bust() {
@@ -847,11 +880,13 @@
       }
       renderLives();
       if(zilches > 2) {
+        busts++;
+        gameOver = true;
         setTimeout(()=>{
-          reset();
           setFeedback("GAME OVER", "fail");
         },700);
       }
+      save();
     }
 
     function renderLives()
@@ -862,6 +897,10 @@
     }
 
     rollBtn.addEventListener("click", () => {
+      if(gameOver) {
+        reset();
+        setFeedback("Game Start!","info");
+      }
       if(!started) {
         clearDice();
         started = true;
@@ -879,22 +918,28 @@
       }
       roll();
       const notLocked = getNotLockedDice();
-      if(!hasValidDiceSelection(notLocked) && getWildDice().length < 1) {
+      if(!hasValidDiceSelection(notLocked, true) && getWildDice().length < 1) {
         started = false;
         score = 0;
         dieStates.fill(DICE_STATE_NONE);
         setTimeout(bust, ROLL_TIME);
       }
       render();
+      save();
     });
+
+    function checkSelected(reduce) {
+      const picked = getPickedDice();
+      console.log(picked, hasValidDiceSelection(picked, !!reduce));
+    }
 
     plusBtn.addEventListener("click", () => {
       if(!started) return;
-      const picked = getPickedDice().length > 0;
+      const picked = getPickedDice().length < 6;
       for(let i = 0; i < 6; i++) {
         const state = dieStates[i];
         if (state == DICE_STATE_LOCKED) continue;
-        dieStates[i] = picked ? DICE_STATE_NONE : DICE_STATE_PICKED;
+        dieStates[i] = picked ? DICE_STATE_PICKED : DICE_STATE_NONE;
       }
       render();
     });
@@ -921,14 +966,21 @@
       }
       started = false;
       zilches = 0;
+      if(banked >= 10000) {
+        gameOver = true;
+        scores.push([banked,turns]);
+        openScoreModal(banked);
+        setFeedback("Success!","success");
+      }
       render();
+      save();
     });
 
     function dieClick(die, index) {
       if(!started) return;
       const val = dieVals[index];
       if(val == DICE_VAL_WILD) {
-        openModal();
+        openDicePickModal();
         return;
       }
       for(const i in dieStates) {
@@ -940,6 +992,7 @@
       if (state == DICE_STATE_LOCKED) return;
       dieStates[index] = state == DICE_STATE_PICKED ? DICE_STATE_NONE : DICE_STATE_PICKED;
       render();
+      save();
     }
 
     for (const index in dice) {
@@ -975,7 +1028,6 @@
       tgl.addEventListener("input", saveOptions);
     }
 
-    loadOptions();
 
     function reset() {
       started = false;
@@ -985,6 +1037,7 @@
       dieStates.fill(DICE_STATE_NONE);
       dieVals.fill(0);
       turns = 0;
+      gameOver = false;
       render();
     }
 
@@ -997,6 +1050,9 @@
         banked: banked,
         turns: turns,
         zilches: zilches,
+        over: gameOver,
+        busts: busts,
+        scores: scores,
       };
       localStorage.setItem("greedy-save", JSON.stringify(data));
     }
@@ -1005,22 +1061,34 @@
       const saveData = localStorage.getItem("greedy-save");
       if(saveData) {
         const data = JSON.parse(saveData);
-        banked = data.banked;
-        score = data.score;
-        zilches = data.zilches;
-        turns = data.turns;
-        started = data.started;
+        console.log("Load:", data);
+        banked = data.banked || 0;
+        score = data.score || 0;
+        zilches = data.zilches || 0;
+        turns = data.turns || 0;
+        started = !!data.started;
+        busts = data.busts || 0;
+        gameOver = !!data.gameOver;
+        if(data.scores instanceof Array) {
+          for(const score of data.scores) {
+            scores.push(score);
+          }
+        }
         if(data.values instanceof Array) {
           for(const i in dieVals) {
             dieVals[i] = data.values[i] || false;
+            console.log("vals",dieVals,data.values,i);
           }
         }
         if(data.states instanceof Array) {
           for(const i in dieStates) {
-            dieStates[i] = data.states[i] || false;
+            const state = data.states[i];
+            dieStates[i] = typeof state === "string" ? state : false;
+            console.log("states",dieStates,data.states,i);
           }
         }
         if(dieStates.some(v => v === false) || dieVals.some(v => v === false)) {
+          console.log("Save Load Failed");
           reset();
         } else {
           render();
@@ -1042,11 +1110,14 @@
           }
         }
         render();
-        closeModal();
+        closeDicePickModal();
+        save();
       }
     });
 
+    loadOptions();
     load();
+    render();
 
   </script>
 </body>
