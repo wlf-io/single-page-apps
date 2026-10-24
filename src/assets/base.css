@@ -1,0 +1,54 @@
+:root {
+  --bg: #0f1419;
+  --panel: #1a222c;
+  --border: #2c3a4a;
+  --text: #e8eef4;
+  --muted: #8a9aab;
+  --accent: #3d9cf0;
+  --accent-soft: #1e3a5f;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  min-height: 100vh;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 10%, #1a2a3a 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 90% 80%, #1a2830 0%, transparent 45%),
+    var(--bg);
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  gap: 1.25rem;
+}
+
+h1 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+h1 span { color: var(--muted); font-weight: 400; font-size: 0.9em; }
+h1 span::before {
+  content: "·";
+  margin-right: 0.3em;
+  margin-left: 0.3em;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem 1.25rem;
+  font-size: 0.8rem;
+}
+
+.links a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.links a:hover { text-decoration: underline; }

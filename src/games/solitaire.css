@@ -1,0 +1,405 @@
+:root {
+    --slot: rgba(26, 34, 44, 0.55);
+}
+
+.construction {
+    align-self: stretch;
+    width: calc(100% + 3rem);
+    margin: -1.5rem -1.5rem 0;
+    padding: 0.55rem 1rem;
+    overflow: hidden;
+    text-align: center;
+    background-image: repeating-linear-gradient(-45deg,
+            #111 0 12px,
+            #f0c400 12px 24px);
+    animation: hazard 0.7s linear infinite;
+}
+
+.construction span {
+    display: inline-block;
+    padding: 0.12rem 0.7rem;
+    background: #f0c400;
+    color: #111;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+@keyframes hazard {
+    to {
+        background-position: 33.941px 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .construction {
+        animation: none;
+    }
+}
+
+.content {
+    width: 100%;
+    max-width: 960px;
+    flex: 1;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.55rem;
+    margin-bottom: 0.85rem;
+}
+
+.toolbar-end {
+    display: flex;
+    gap: 0.45rem;
+}
+
+.toolbar button {
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--accent);
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.75rem;
+    cursor: pointer;
+}
+
+.toolbar button:hover:not(:disabled),
+.toolbar button:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    outline: none;
+}
+
+.toolbar button:disabled {
+    color: var(--muted);
+    cursor: default;
+}
+
+.board {
+    display: flex;
+    flex-direction: column;
+    gap: 1.35rem;
+    position: relative;
+    min-height: calc(3 * (10rem + 1.35rem + 11rem));
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.55rem;
+    align-items: start;
+}
+
+.slot {
+    aspect-ratio: 60 / 88;
+    width: 100%;
+    border: 1px dashed var(--border);
+    border-radius: 15px;
+    background: var(--slot);
+}
+
+.gap {
+    min-height: 0;
+}
+
+.tableau .pile {
+    min-height: calc(3 * (100% * 88 / 60 * 0.35 + 11rem));
+}
+
+.cards {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    container-type: inline-size;
+    --card-w: calc((100cqi - 6 * 0.55rem) / 7);
+    --card-h: calc(var(--card-w) * 90 / 62);
+}
+
+.card {
+    position: absolute;
+    width: var(--card-w);
+    height: var(--card-h);
+    background-image: url("../assets/deck.svg");
+    background-repeat: no-repeat;
+    background-size: calc(952 / 62 * 100%) calc(384 / 90 * 100%);
+    /* percentage positions resolve against (box - image), so divide by 952-62 and 384-90 */
+    background-position:
+        calc((3 + var(--cx, 0) * 68) / 890 * 100%) calc((3 + var(--cy, 0) * 96) / 294 * 100%);
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+
+    &.flipped {
+        --cx: 13 !important;
+        --cy: 3 !important;
+    }
+
+    &.dragging {
+        cursor: grabbing;
+    }
+}
+
+.card-s1 {
+    --cx: 0;
+    --cy: 0;
+}
+
+.card-s2 {
+    --cx: 1;
+    --cy: 0;
+}
+
+.card-s3 {
+    --cx: 2;
+    --cy: 0;
+}
+
+.card-s4 {
+    --cx: 3;
+    --cy: 0;
+}
+
+.card-s5 {
+    --cx: 4;
+    --cy: 0;
+}
+
+.card-s6 {
+    --cx: 5;
+    --cy: 0;
+}
+
+.card-s7 {
+    --cx: 6;
+    --cy: 0;
+}
+
+.card-s8 {
+    --cx: 7;
+    --cy: 0;
+}
+
+.card-s9 {
+    --cx: 8;
+    --cy: 0;
+}
+
+.card-s10 {
+    --cx: 9;
+    --cy: 0;
+}
+
+.card-s11 {
+    --cx: 10;
+    --cy: 0;
+}
+
+.card-s12 {
+    --cx: 11;
+    --cy: 0;
+}
+
+.card-s13 {
+    --cx: 12;
+    --cy: 0;
+}
+
+.card-h1 {
+    --cx: 0;
+    --cy: 1;
+}
+
+.card-h2 {
+    --cx: 1;
+    --cy: 1;
+}
+
+.card-h3 {
+    --cx: 2;
+    --cy: 1;
+}
+
+.card-h4 {
+    --cx: 3;
+    --cy: 1;
+}
+
+.card-h5 {
+    --cx: 4;
+    --cy: 1;
+}
+
+.card-h6 {
+    --cx: 5;
+    --cy: 1;
+}
+
+.card-h7 {
+    --cx: 6;
+    --cy: 1;
+}
+
+.card-h8 {
+    --cx: 7;
+    --cy: 1;
+}
+
+.card-h9 {
+    --cx: 8;
+    --cy: 1;
+}
+
+.card-h10 {
+    --cx: 9;
+    --cy: 1;
+}
+
+.card-h11 {
+    --cx: 10;
+    --cy: 1;
+}
+
+.card-h12 {
+    --cx: 11;
+    --cy: 1;
+}
+
+.card-h13 {
+    --cx: 12;
+    --cy: 1;
+}
+
+.card-c1 {
+    --cx: 0;
+    --cy: 2;
+}
+
+.card-c2 {
+    --cx: 1;
+    --cy: 2;
+}
+
+.card-c3 {
+    --cx: 2;
+    --cy: 2;
+}
+
+.card-c4 {
+    --cx: 3;
+    --cy: 2;
+}
+
+.card-c5 {
+    --cx: 4;
+    --cy: 2;
+}
+
+.card-c6 {
+    --cx: 5;
+    --cy: 2;
+}
+
+.card-c7 {
+    --cx: 6;
+    --cy: 2;
+}
+
+.card-c8 {
+    --cx: 7;
+    --cy: 2;
+}
+
+.card-c9 {
+    --cx: 8;
+    --cy: 2;
+}
+
+.card-c10 {
+    --cx: 9;
+    --cy: 2;
+}
+
+.card-c11 {
+    --cx: 10;
+    --cy: 2;
+}
+
+.card-c12 {
+    --cx: 11;
+    --cy: 2;
+}
+
+.card-c13 {
+    --cx: 12;
+    --cy: 2;
+}
+
+.card-d1 {
+    --cx: 0;
+    --cy: 3;
+}
+
+.card-d2 {
+    --cx: 1;
+    --cy: 3;
+}
+
+.card-d3 {
+    --cx: 2;
+    --cy: 3;
+}
+
+.card-d4 {
+    --cx: 3;
+    --cy: 3;
+}
+
+.card-d5 {
+    --cx: 4;
+    --cy: 3;
+}
+
+.card-d6 {
+    --cx: 5;
+    --cy: 3;
+}
+
+.card-d7 {
+    --cx: 6;
+    --cy: 3;
+}
+
+.card-d8 {
+    --cx: 7;
+    --cy: 3;
+}
+
+.card-d9 {
+    --cx: 8;
+    --cy: 3;
+}
+
+.card-d10 {
+    --cx: 9;
+    --cy: 3;
+}
+
+.card-d11 {
+    --cx: 10;
+    --cy: 3;
+}
+
+.card-d12 {
+    --cx: 11;
+    --cy: 3;
+}
+
+.card-d13 {
+    --cx: 12;
+    --cy: 3;
+}

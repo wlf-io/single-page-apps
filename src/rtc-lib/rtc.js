@@ -889,6 +889,32 @@
     }
   }
 
+  function normalizeKind(value) {
+    return value === "mqtt" || value === "tracker" ? value : "";
+  }
+
+  function parseServerUrl(value) {
+    const text = String(value || "").trim();
+    if (!text) return "";
+    try {
+      const url = new URL(text);
+      if (url.protocol !== "wss:" && url.protocol !== "ws:") return "";
+      return text;
+    } catch {
+      return "";
+    }
+  }
+
+  function serverFromHash(data) {
+    const known = SERVERS.find((server) => server.id === data.server);
+    if (known) return known;
+    if (data.server !== "custom") return null;
+    const kind = normalizeKind(data.kind);
+    const url = parseServerUrl(data.url);
+    if (!kind || !url) return null;
+    return { id: "custom", name: url, kind, url };
+  }
+
   function getHashData() {
     const hash = location.hash.slice(1);
     // Split the hash string (like a query string) into a key-value object, using & and first = as separators
@@ -914,12 +940,22 @@
     if (!root) throw new Error("Missing #rtc-container.");
     mounted = true;
     const hashData = getHashData();
+    let serverId = hashData.server || storageGet(localStorage, "rtc-lib:server") || SERVERS[0].id;
+    if (serverId !== "custom" && !SERVERS.some((server) => server.id === serverId)) serverId = SERVERS[0].id;
+    let customKind = normalizeKind(storageGet(localStorage, "rtc-lib:custom-kind")) || "mqtt";
+    let customUrl = storageGet(localStorage, "rtc-lib:custom-url");
+    if (hashData.server === "custom") {
+      const hashKind = normalizeKind(hashData.kind);
+      if (hashKind) customKind = hashKind;
+      if (Object.prototype.hasOwnProperty.call(hashData, "url")) customUrl = hashData.url;
+    }
     const draft = {
       name: storageGet(localStorage, "rtc-lib:handle"),
       secret: hashData.secret || "",
-      server: hashData.server || storageGet(localStorage, "rtc-lib:server") || SERVERS[0].id,
+      server: serverId,
+      customKind,
+      customUrl,
     };
-    if (!SERVERS.some((server) => server.id === draft.server)) draft.server = SERVERS[0].id;
 
     let summary = null;
     let peers = null;
@@ -1008,7 +1044,16 @@
       const data = getHashData();
       data.secret = currentSecret();
       data.server = draft.server;
-      const keys = ["secret", "server"].concat(Object.keys(data).filter((key) => key !== "secret" && key !== "server"));
+      const preferred = ["secret", "server"];
+      if (draft.server === "custom") {
+        data.kind = draft.customKind;
+        data.url = draft.customUrl.trim();
+        preferred.push("kind", "url");
+      } else {
+        delete data.kind;
+        delete data.url;
+      }
+      const keys = preferred.concat(Object.keys(data).filter((key) => !preferred.includes(key)));
       const hash = keys.map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(data[key] ?? "")).join("&");
       return location.origin + location.pathname + location.search + "#" + hash;
     }
@@ -1041,6 +1086,21 @@
 
     function serverDetail(server) {
       return (server.kind === "mqtt" ? "MQTT · " : "WebTorrent tracker · ") + server.url;
+    }
+
+    function customDetail() {
+      const url = draft.customUrl.trim();
+      if (!url) return "MQTT or WebTorrent tracker";
+      const kind = draft.customKind === "tracker" ? "WebTorrent tracker" : "MQTT";
+      return kind + " · " + url;
+    }
+
+    function chosenServer() {
+      if (draft.server !== "custom") return SERVERS.find((item) => item.id === draft.server) || null;
+      const kind = normalizeKind(draft.customKind);
+      const url = parseServerUrl(draft.customUrl);
+      if (!kind || !url) return null;
+      return { id: "custom", name: url, kind, url };
     }
 
     function peerLabel(peer) {
@@ -1109,7 +1169,7 @@
       if (connecting) return;
       const name = draft.name;
       const secret = draft.secret;
-      const server = SERVERS.find((item) => item.id === draft.server);
+      const server = chosenServer();
       if (!server) return;
       connecting = true;
       const connectButton = root.querySelector(".rtc-connect");
@@ -1136,6 +1196,10 @@
         active = session;
         storageSet(localStorage, "rtc-lib:handle", name);
         storageSet(localStorage, "rtc-lib:server", server.id);
+        if (server.id === "custom") {
+          storageSet(localStorage, "rtc-lib:custom-kind", server.kind);
+          storageSet(localStorage, "rtc-lib:custom-url", draft.customUrl);
+        }
         connecting = false;
         lastError = "";
         const wasOpen = !!root.querySelector(".rtc-scrim");
@@ -1204,137 +1268,200 @@
       });
       secretField.append(secretInput);
 
-      const serverField = document.createElement("div");
-      serverField.className = "rtc-field";
-      const serverLabel = document.createElement("span");
-      serverLabel.id = "rtc-server-label";
-      serverLabel.textContent = "Server";
-      const picker = document.createElement("div");
-      picker.className = "rtc-picker";
-      const trigger = document.createElement("button");
-      trigger.type = "button";
-      trigger.className = "rtc-picker-trigger";
-      trigger.setAttribute("aria-haspopup", "listbox");
-      trigger.setAttribute("aria-expanded", "false");
-      trigger.setAttribute("aria-labelledby", "rtc-server-label rtc-server-current");
-      const triggerValue = document.createElement("span");
-      triggerValue.className = "rtc-picker-value";
-      const triggerName = document.createElement("strong");
-      triggerName.id = "rtc-server-current";
-      const triggerDetail = document.createElement("small");
-      triggerValue.append(triggerName, triggerDetail);
-      const chevron = document.createElement("span");
-      chevron.className = "rtc-picker-chevron";
-      chevron.setAttribute("aria-hidden", "true");
-      trigger.append(triggerValue, chevron);
-      const menu = document.createElement("div");
-      menu.className = "rtc-picker-menu";
-      menu.hidden = true;
-      menu.id = "rtc-server-list";
-      menu.setAttribute("role", "listbox");
-      menu.setAttribute("aria-labelledby", "rtc-server-label");
-      trigger.setAttribute("aria-controls", "rtc-server-list");
-      const options = SERVERS.map((server) => {
-        const option = document.createElement("button");
-        option.type = "button";
-        option.className = "rtc-picker-option";
-        option.dataset.id = server.id;
-        option.setAttribute("role", "option");
-        const optionName = document.createElement("strong");
-        optionName.textContent = server.name;
-        const optionDetail = document.createElement("small");
-        optionDetail.textContent = serverDetail(server);
-        option.append(optionName, optionDetail);
-        option.addEventListener("click", () => {
-          draft.server = server.id;
-          storageSet(localStorage, "rtc-lib:server", server.id);
-          paintServer();
-          setServerOpen(false);
-          trigger.focus();
+      function mountPicker({ labelText, labelId, menuId, currentId, getId, setId, getChoices }) {
+        const field = document.createElement("div");
+        field.className = "rtc-field";
+        const label = document.createElement("span");
+        label.id = labelId;
+        label.textContent = labelText;
+        const picker = document.createElement("div");
+        picker.className = "rtc-picker";
+        const trigger = document.createElement("button");
+        trigger.type = "button";
+        trigger.className = "rtc-picker-trigger";
+        trigger.setAttribute("aria-haspopup", "listbox");
+        trigger.setAttribute("aria-expanded", "false");
+        trigger.setAttribute("aria-labelledby", labelId + " " + currentId);
+        const triggerValue = document.createElement("span");
+        triggerValue.className = "rtc-picker-value";
+        const triggerName = document.createElement("strong");
+        triggerName.id = currentId;
+        const triggerDetail = document.createElement("small");
+        triggerValue.append(triggerName, triggerDetail);
+        const chevron = document.createElement("span");
+        chevron.className = "rtc-picker-chevron";
+        chevron.setAttribute("aria-hidden", "true");
+        trigger.append(triggerValue, chevron);
+        const menu = document.createElement("div");
+        menu.className = "rtc-picker-menu";
+        menu.hidden = true;
+        menu.id = menuId;
+        menu.setAttribute("role", "listbox");
+        menu.setAttribute("aria-labelledby", labelId);
+        trigger.setAttribute("aria-controls", menuId);
+        const options = getChoices().map((choice) => {
+          const option = document.createElement("button");
+          option.type = "button";
+          option.className = "rtc-picker-option";
+          option.dataset.id = choice.id;
+          option.setAttribute("role", "option");
+          option.append(document.createElement("strong"), document.createElement("small"));
+          option.addEventListener("click", () => {
+            setId(choice.id);
+            paint();
+            setOpen(false);
+            trigger.focus();
+          });
+          menu.append(option);
+          return option;
         });
-        menu.append(option);
-        return option;
-      });
-      function paintServer() {
-        const server = SERVERS.find((item) => item.id === draft.server) || SERVERS[0];
-        triggerName.textContent = server.name;
-        triggerDetail.textContent = serverDetail(server);
-        for (const option of options) {
-          const selected = option.dataset.id === server.id;
-          option.classList.toggle("is-selected", selected);
-          option.setAttribute("aria-selected", String(selected));
+        function paint() {
+          const choices = getChoices();
+          const selected = choices.find((choice) => choice.id === getId()) || choices[0];
+          triggerName.textContent = selected.name;
+          triggerDetail.textContent = selected.detail;
+          options.forEach((option, index) => {
+            const choice = choices[index];
+            option.querySelector("strong").textContent = choice.name;
+            option.querySelector("small").textContent = choice.detail;
+            const isSelected = choice.id === selected.id;
+            option.classList.toggle("is-selected", isSelected);
+            option.setAttribute("aria-selected", String(isSelected));
+          });
         }
-      }
-      function placeMenu() {
-        const rect = trigger.getBoundingClientRect();
-        if (rect.bottom < 0 || rect.top > window.innerHeight) {
-          setServerOpen(false);
-          return;
+        function place() {
+          const rect = trigger.getBoundingClientRect();
+          if (rect.bottom < 0 || rect.top > window.innerHeight) {
+            setOpen(false);
+            return;
+          }
+          menu.style.left = rect.left + "px";
+          menu.style.width = rect.width + "px";
+          const below = rect.bottom + 6;
+          menu.style.top = below + "px";
+          const height = menu.offsetHeight;
+          if (below + height > window.innerHeight - 8) {
+            menu.style.top = Math.max(8, rect.top - 6 - height) + "px";
+          }
         }
-        menu.style.left = rect.left + "px";
-        menu.style.width = rect.width + "px";
-        const below = rect.bottom + 6;
-        menu.style.top = below + "px";
-        const height = menu.offsetHeight;
-        if (below + height > window.innerHeight - 8) {
-          menu.style.top = Math.max(8, rect.top - 6 - height) + "px";
+        function setOpen(next) {
+          menu.hidden = !next;
+          picker.classList.toggle("is-open", next);
+          trigger.setAttribute("aria-expanded", String(next));
+          if (!next) return;
+          place();
+          if (menu.hidden) return;
+          (options.find((option) => option.dataset.id === getId()) || options[0]).focus();
         }
-      }
-      function setServerOpen(next) {
-        menu.hidden = !next;
-        picker.classList.toggle("is-open", next);
-        trigger.setAttribute("aria-expanded", String(next));
-        if (!next) return;
-        placeMenu();
-        if (menu.hidden) return;
-        (options.find((option) => option.dataset.id === draft.server) || options[0]).focus();
-      }
-      trigger.addEventListener("click", () => setServerOpen(menu.hidden));
-      trigger.addEventListener("keydown", (event) => {
-        if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
-        event.preventDefault();
-        setServerOpen(true);
-      });
-      menu.addEventListener("keydown", (event) => {
-        const index = options.indexOf(document.activeElement);
-        if (event.key === "Escape") {
+        trigger.addEventListener("click", () => setOpen(menu.hidden));
+        trigger.addEventListener("keydown", (event) => {
+          if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
           event.preventDefault();
-          event.stopPropagation();
-          setServerOpen(false);
-          trigger.focus();
-          return;
-        }
-        if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
-          event.preventDefault();
-        }
-        if (event.key === "ArrowDown") options[Math.min(options.length - 1, index + 1)]?.focus();
-        if (event.key === "ArrowUp") options[Math.max(0, index - 1)]?.focus();
-        if (event.key === "Home") options[0].focus();
-        if (event.key === "End") options[options.length - 1].focus();
+          setOpen(true);
+        });
+        menu.addEventListener("keydown", (event) => {
+          const index = options.indexOf(document.activeElement);
+          if (event.key === "Escape") {
+            event.preventDefault();
+            event.stopPropagation();
+            setOpen(false);
+            trigger.focus();
+            return;
+          }
+          if (event.key === "ArrowDown" || event.key === "ArrowUp" || event.key === "Home" || event.key === "End") {
+            event.preventDefault();
+          }
+          if (event.key === "ArrowDown") options[Math.min(options.length - 1, index + 1)]?.focus();
+          if (event.key === "ArrowUp") options[Math.max(0, index - 1)]?.focus();
+          if (event.key === "Home") options[0].focus();
+          if (event.key === "End") options[options.length - 1].focus();
+        });
+        picker.addEventListener("focusout", (event) => {
+          if (!menu.hidden && !picker.contains(event.relatedTarget) && !menu.contains(event.relatedTarget)) {
+            setOpen(false);
+          }
+        });
+        document.body.append(menu);
+        picker.append(trigger);
+        field.append(label, picker);
+        paint();
+        const signal = pickerAbort.signal;
+        document.addEventListener("mousedown", (event) => {
+          if (menu.hidden) return;
+          if (picker.contains(event.target) || menu.contains(event.target)) return;
+          setOpen(false);
+        }, { capture: true, signal });
+        window.addEventListener("resize", () => {
+          if (!menu.hidden) place();
+        }, { signal });
+        return { field, menu, paint, place, setOpen };
+      }
+
+      const serverPicker = mountPicker({
+        labelText: "Server",
+        labelId: "rtc-server-label",
+        menuId: "rtc-server-list",
+        currentId: "rtc-server-current",
+        getId: () => draft.server,
+        setId(id) {
+          draft.server = id;
+          storageSet(localStorage, "rtc-lib:server", id);
+          paintCustom();
+        },
+        getChoices: () => SERVERS.map((server) => ({
+          id: server.id,
+          name: server.name,
+          detail: serverDetail(server),
+        })).concat([{ id: "custom", name: "Custom", detail: customDetail() }]),
       });
-      picker.addEventListener("focusout", (event) => {
-        if (!menu.hidden && !picker.contains(event.relatedTarget) && !menu.contains(event.relatedTarget)) {
-          setServerOpen(false);
-        }
+      const typePicker = mountPicker({
+        labelText: "Type",
+        labelId: "rtc-type-label",
+        menuId: "rtc-type-list",
+        currentId: "rtc-type-current",
+        getId: () => draft.customKind,
+        setId(id) {
+          draft.customKind = id;
+          storageSet(localStorage, "rtc-lib:custom-kind", id);
+          serverPicker.paint();
+        },
+        getChoices: () => [
+          { id: "mqtt", name: "MQTT", detail: "MQTT broker" },
+          { id: "tracker", name: "Tracker", detail: "WebTorrent tracker" },
+        ],
       });
-      document.body.append(menu);
-      picker.append(trigger);
-      serverField.append(serverLabel, picker);
-      paintServer();
-      const signal = pickerAbort.signal;
-      document.addEventListener("mousedown", (event) => {
-        if (menu.hidden) return;
-        if (picker.contains(event.target) || menu.contains(event.target)) return;
-        setServerOpen(false);
-      }, { capture: true, signal });
-      window.addEventListener("resize", () => {
-        if (!menu.hidden) placeMenu();
-      }, { signal });
+      const urlField = document.createElement("label");
+      urlField.className = "rtc-field";
+      urlField.append("URL");
+      const urlInput = document.createElement("input");
+      urlInput.name = "rtc-server-url";
+      urlInput.placeholder = "wss://example.com/mqtt";
+      urlInput.autocomplete = "off";
+      urlInput.spellcheck = false;
+      urlInput.setAttribute("data-1p-ignore", "");
+      urlInput.setAttribute("data-lpignore", "true");
+      urlInput.setAttribute("data-bwignore", "");
+      urlInput.setAttribute("data-protonpass-ignore", "true");
+      urlInput.value = draft.customUrl;
+      urlInput.addEventListener("input", () => {
+        draft.customUrl = urlInput.value;
+        storageSet(localStorage, "rtc-lib:custom-url", urlInput.value);
+        serverPicker.paint();
+      });
+      urlField.append(urlInput);
+      function paintCustom() {
+        const custom = draft.server === "custom";
+        typePicker.field.hidden = !custom;
+        urlField.hidden = !custom;
+        if (!custom) typePicker.setOpen(false);
+        serverPicker.paint();
+      }
+      paintCustom();
       document.addEventListener("keydown", (event) => {
-        if (event.key !== "Escape" || !menu.hidden) return;
+        if (event.key !== "Escape" || !serverPicker.menu.hidden || !typePicker.menu.hidden) return;
         event.preventDefault();
         closeDialog();
-      }, { signal });
+      }, { signal: pickerAbort.signal });
 
       const stun = document.createElement("p");
       stun.className = "rtc-stun";
@@ -1370,7 +1497,7 @@
 
       const scroll = document.createElement("div");
       scroll.className = "rtc-scroll";
-      scroll.append(title, lead, nameField, secretField, serverField, stun, error);
+      scroll.append(title, lead, nameField, secretField, serverPicker.field, typePicker.field, urlField, stun, error);
       if (active) {
         summary = document.createElement("span");
         summary.className = "rtc-summary";
@@ -1383,7 +1510,8 @@
         paintPeers();
       }
       scroll.addEventListener("scroll", () => {
-        if (!menu.hidden) placeMenu();
+        if (!serverPicker.menu.hidden) serverPicker.place();
+        if (!typePicker.menu.hidden) typePicker.place();
       }, { signal: pickerAbort.signal });
       const form = document.createElement("form");
       form.autocomplete = "off";
@@ -1393,6 +1521,7 @@
         if (connecting || button.disabled) return;
         draft.name = nameInput.value.trim();
         draft.secret = secretInput.value;
+        draft.customUrl = urlInput.value;
         if (!draft.name) {
           error.hidden = false;
           error.textContent = "Enter a handle.";
@@ -1401,6 +1530,12 @@
         if (!draft.secret) {
           error.hidden = false;
           error.textContent = "Enter a shared secret.";
+          return;
+        }
+        if (draft.server === "custom" && !chosenServer()) {
+          error.hidden = false;
+          error.textContent = "Enter a websocket URL, starting with wss:// or ws://.";
+          urlInput.focus();
           return;
         }
         error.hidden = true;
@@ -1443,11 +1578,15 @@
     });
 
     const savedHandle = draft.name.trim();
-    const hashServer = SERVERS.find((server) => server.id === hashData.server);
+    const hashServer = serverFromHash(hashData);
     if (savedHandle && hashData.secret && hashServer) {
       draft.name = savedHandle;
       draft.secret = hashData.secret;
       draft.server = hashServer.id;
+      if (hashServer.id === "custom") {
+        draft.customKind = hashServer.kind;
+        draft.customUrl = hashServer.url;
+      }
       startConnect();
     } else {
       showForm("");
