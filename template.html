@@ -37,7 +37,12 @@
     }
 
     h1 span { color: var(--muted); font-weight: 400; font-size: 0.9em; }
-
+    h1 span::before {
+      content: "·";
+      margin-right: 0.3em;
+      margin-left: 0.3em;
+    }
+    
     .links {
       display: flex;
       flex-wrap: wrap;

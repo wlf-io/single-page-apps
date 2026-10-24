@@ -47,6 +47,11 @@
     }
 
     h1 span { color: var(--muted); font-weight: 400; font-size: 0.9em; }
+    h1 span::before {
+      content: "·";
+      margin-right: 0.3em;
+      margin-left: 0.3em;
+    }
 
     .content {
       width: 100%;
@@ -326,7 +331,7 @@
   </style>
 </head>
 <body>
-  <h1>JSON Compare <span>· Side-by-side JSON diff</span></h1>
+  <h1>JSON Compare<span>Side-by-side JSON diff</span></h1>
 
   <div class="content">
     <div class="toolbar">
