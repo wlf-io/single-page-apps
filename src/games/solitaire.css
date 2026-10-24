@@ -124,7 +124,7 @@
     position: absolute;
     width: var(--card-w);
     height: var(--card-h);
-    background-image: url("../assets/deck.svg");
+    background-image: url("/assets/deck.svg");
     background-repeat: no-repeat;
     background-size: calc(952 / 62 * 100%) calc(384 / 90 * 100%);
     /* percentage positions resolve against (box - image), so divide by 952-62 and 384-90 */
