@@ -1,0 +1,304 @@
+html,
+body {
+    height: 100%;
+}
+
+body {
+    min-height: auto;
+    align-items: stretch;
+    padding: 0;
+    gap: 0;
+}
+
+body.menu-open {
+    overflow: hidden;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 50;
+    flex-shrink: 0;
+    min-height: 3.65rem;
+}
+
+.burger {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0.45rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.burger span {
+    display: block;
+    height: 2px;
+    width: 100%;
+    background: var(--text);
+    border-radius: 1px;
+}
+
+.burger:hover,
+.burger:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    outline: none;
+}
+
+.topbar h1 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-app {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    max-width: min(36rem, calc(100% - 28rem));
+    pointer-events: none;
+}
+
+.topbar-app-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-app-blurb {
+    margin-top: 0.1rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.topbar-actions {
+    margin-left: auto;
+    display: none;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+
+body.app-open .topbar-actions {
+    display: flex;
+}
+
+.topbar-btn {
+    font-family: inherit;
+    font-size: 0.8rem;
+    color: var(--accent);
+    text-decoration: none;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.4rem 0.7rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.topbar-btn:hover,
+.topbar-btn:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    outline: none;
+}
+
+.page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem;
+    gap: 1.25rem;
+    flex: 1;
+    min-height: 0;
+    min-width: 0;
+}
+
+.page.app-open {
+    padding: 0;
+    align-items: stretch;
+}
+
+.home {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+    width: 100%;
+}
+
+.page.app-open .home {
+    display: none;
+}
+
+.app-frame {
+    display: none;
+    flex: 1;
+    width: 100%;
+    border: 0;
+    background: var(--bg);
+}
+
+.page.app-open .app-frame {
+    display: block;
+}
+
+.subtitle {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 0.95rem;
+}
+
+.intro {
+    font-size: 0.9rem;
+    color: var(--muted);
+    max-width: 520px;
+    text-align: center;
+    line-height: 1.5;
+}
+
+.panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    width: 100%;
+    max-width: 520px;
+}
+
+.panel h2,
+.sidebar h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 0.85rem;
+}
+
+.app-section+.app-section {
+    margin-top: 1.1rem;
+}
+
+.apps {
+    list-style: none;
+    display: grid;
+    gap: 0.65rem;
+}
+
+.apps a {
+    display: block;
+    text-decoration: none;
+    color: var(--text);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+}
+
+.apps a:hover,
+.apps a:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    outline: none;
+}
+
+.apps .name {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.apps .blurb {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.workspace {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+}
+
+.scrim {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 12, 16, 0.55);
+    z-index: 30;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    height: auto;
+    width: min(300px, 86vw);
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 1.1rem 1.1rem 1.5rem;
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform 0.2s ease;
+    overflow-y: auto;
+}
+
+body.menu-open .scrim {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+body.menu-open .sidebar {
+    transform: translateX(0);
+}
+
+.sidebar-home {
+    display: block;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.75rem 0.9rem;
+}
+
+.sidebar-home:hover,
+.sidebar-home:focus-visible {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+    outline: none;
+}
