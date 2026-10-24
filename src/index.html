@@ -424,6 +424,14 @@
         "blurb": "Sync Data between instances",
         "debug": false,
         "category": "tools"
+      },
+      {
+        "id": "testing",
+        "name": "Testing",
+        "href": "debug/testing.html",
+        "blurb": "Testing page for debugging purposes.",
+        "debug": true,
+        "category": "debug"
       }
     ]
   </script>
@@ -535,7 +543,13 @@
     }
 
     function hashId() {
-      return decodeURIComponent(location.hash.replace(/^#/, ""));
+      return decodeURIComponent(location.hash.replace(/^#/, "")).split("&");
+    }
+
+    function setAppID(id) {
+      const parts = hashId();
+      parts[0] = id;
+      location.hash = parts.join("&");
     }
 
     function appById(id) {
@@ -554,19 +568,21 @@
       if (!isListed(app)) return;
       frame.hidden = false;
       if (frame.dataset.appId !== app.id) {
-        frame.src = app.href;
+        const parts = hashId();
+        parts.shift();
+        frame.src = app.href + (parts.length ? `#${parts.join("&")}` : "");
         frame.dataset.appId = app.id;
       }
       page.classList.add("app-open");
       setTopbarApp(app);
       setMenu(false);
       if (updateHash && hashId() !== app.id) {
-        location.hash = app.id;
+        setAppID(app.id);
       }
     }
 
     function restoreFromHash() {
-      const app = appById(hashId());
+      const app = appById(hashId()[0] || null);
       if (isListed(app)) openApp(app, { updateHash: false });
       else closeApp();
     }

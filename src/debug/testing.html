@@ -3,26 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Sync</title>
-  <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPCEtLSBFcXVhbC1lZGdlIGlzb21ldHJpYyBjdWJlOiAzMMKwIHJob21iaSwgdmVydGljYWwgPSBlZGdlIGxlbmd0aCAtLT4KICA8cGF0aCBmaWxsPSIjM2Q5Y2YwIiBkPSJNMTYgNCAyNi4zOTIgMTAgMTYgMTYgNS42MDggMTBaIi8+CiAgPHBhdGggZmlsbD0iIzJhNmZhZCIgZD0iTTUuNjA4IDEwIDE2IDE2djEybC0xMC4zOTItNloiLz4KICA8cGF0aCBmaWxsPSIjMWU0ZjgyIiBkPSJNMjYuMzkyIDEwIDE2IDE2djEybDEwLjM5Mi02WiIvPgo8L3N2Zz4K" type="image/svg+xml" />
+  <title>App</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
   <style>
     :root {
       --bg: #0f1419;
-      --panel: #1a222c;
-      --border: #2c3a4a;
       --text: #e8eef4;
       --muted: #8a9aab;
       --accent: #3d9cf0;
-      --accent-soft: #1e3a5f;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    html, body { height: 100%; }
-
     body {
       min-height: 100vh;
-      height: 100%;
       font-family: "Segoe UI", system-ui, sans-serif;
       background:
         radial-gradient(ellipse 80% 60% at 20% 10%, #1a2a3a 0%, transparent 50%),
@@ -34,28 +28,21 @@
       align-items: center;
       padding: 1.5rem;
       gap: 1.25rem;
-      overflow: hidden;
     }
 
     h1 {
       font-size: 1.35rem;
       font-weight: 600;
       letter-spacing: 0.02em;
-      flex-shrink: 0;
-      text-align: center;
     }
 
-    h1 span {
-      color: var(--muted);
-      font-weight: 400;
-      font-size: 0.9em;
-    }
+    h1 span { color: var(--muted); font-weight: 400; font-size: 0.9em; }
     h1 span::before {
       content: "·";
       margin-right: 0.3em;
       margin-left: 0.3em;
     }
-
+    
     .links {
       display: flex;
       flex-wrap: wrap;
@@ -70,45 +57,12 @@
     }
 
     .links a:hover { text-decoration: underline; }
-
-    .links { flex-shrink: 0; }
-
-    .content {
-      width: 100%;
-      flex: 1;
-      min-height: 0;
-      display: flex;
-    }
-
-    textarea {
-      flex: 1;
-      width: 100%;
-      min-height: 0;
-      resize: none;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      color: var(--text);
-      caret-color: var(--text);
-      padding: 0.9rem 1rem;
-      font: inherit;
-      line-height: 1.5;
-    }
-
-    textarea::placeholder { color: var(--muted); }
-
-    textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-soft);
-    }
   </style>
 </head>
 <body>
-  <h1>Sync<span>A page to sync data between instances</span></h1>
+  <h1><span></span></h1>
 
   <div class="content">
-    <textarea spellcheck="false" placeholder="Type here…"></textarea>
   </div>
 
   <nav class="links">
@@ -121,6 +75,7 @@
       const title = document.querySelector("h1");
       if (title) title.hidden = true;
     }
+    alert(location.hash);
   </script>
 </body>
 </html>
