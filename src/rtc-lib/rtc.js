@@ -204,7 +204,7 @@
   async function mixSecret(secret) {
     const key = await crypto.subtle.importKey(
       "raw",
-      new TextEncoder().encode(baseSecret),
+      new TextEncoder().encode("c34ab811-02cc-4963-9d47-57ed3b683173-" + location.host + "-" + baseSecret),
       { name: "HMAC", hash: "SHA-256" },
       false,
       ["sign"]

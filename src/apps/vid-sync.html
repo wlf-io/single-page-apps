@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vid Sync</title>
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/assets/base.css" />
+  <link rel="stylesheet" href="/apps/vid-sync.css" />
+  <link id="rtc-style" rel="stylesheet" href="/rtc-lib/rtc.css" />
+  <script id="rtc-lib" src="/rtc-lib/rtc.js"></script>
+</head>
+<body>
+  <h1>Vid Sync<span>A video sync tool</span></h1>
+
+  <div class="content">
+    <section class="player" aria-label="Video player">
+      <div class="stage" id="stage"></div>
+    </section>
+
+    <aside class="rail" aria-label="Playback and lists">
+      <section class="now-playing" aria-labelledby="now-playing-title">
+        <h2 id="now-playing-title">Now playing</h2>
+        <ul class="list" id="now-playing"></ul>
+        <p class="now-playing-empty">Nothing playing</p>
+      </section>
+      <div class="lists">
+      <div class="tabs" role="tablist" aria-label="Lists">
+        <button type="button" role="tab" id="tab-queue" aria-controls="panel-queue" aria-selected="true">Queue</button>
+        <button type="button" role="tab" id="tab-history" aria-controls="panel-history" aria-selected="false" tabindex="-1">History</button>
+      </div>
+      <div class="tab-panel" id="panel-queue" role="tabpanel" aria-labelledby="tab-queue">
+        <div class="tab-body">
+          <ul class="list" id="queue"></ul>
+          <p class="empty">Queue is empty</p>
+        </div>
+        <div class="tab-foot">
+          <button type="button" class="add" id="queue-add" aria-label="Add to queue">+</button>
+        </div>
+      </div>
+      <div class="tab-panel" id="panel-history" role="tabpanel" aria-labelledby="tab-history" hidden>
+        <ul class="list" id="history"></ul>
+        <p class="empty">Nothing played yet</p>
+      </div>
+      </div>
+    </aside>
+  </div>
+
+  <nav class="links">
+    <a href="https://github.com/wlf-io/single-page-apps" target="_blank">GitHub</a>
+    <a href="LICENSE">MIT License</a>
+  </nav>
+
+  <div id="rtc-container"></div>
+
+  <dialog class="add-dialog" id="queue-add-dialog" aria-labelledby="queue-add-title">
+    <form id="queue-add-form">
+      <h2 id="queue-add-title">Add to queue</h2>
+      <label class="field" for="queue-url">URL
+        <input id="queue-url" name="url" type="text" spellcheck="false" autocomplete="off" placeholder="Paste a video URL" aria-describedby="queue-url-error" />
+        <p class="url-error" id="queue-url-error" role="alert" hidden></p>
+      </label>
+      <div class="actions">
+        <button type="button" class="dialog-cancel">Cancel</button>
+        <button type="submit">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    if (window.self !== window.top) {
+      const title = document.querySelector("h1");
+      if (title) title.hidden = true;
+    }
+  </script>
+  <script src="/apps/vid-sync.js"></script>
+</body>
+</html>
