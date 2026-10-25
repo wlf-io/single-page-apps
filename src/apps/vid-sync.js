@@ -20,8 +20,8 @@ const stage = document.getElementById("stage");
 const launch = Date.now();
 
 
-// An array of video items for the current queue
-const queue = JSON.parse(localStorage.getItem("vid-sync-queue") || "[]") || [];
+// Video items for the current queue, keyed by video id
+let queue = loadQueue();
 // An array of video items for past videos
 const history = JSON.parse(localStorage.getItem("vid-sync-history") || "[]") || [];
 // The current video item being played
@@ -163,16 +163,31 @@ function createHtmlPlayer(mount, url) {
   };
 }
 
+function asQueue(value) {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value;
+  return {};
+}
+
+function loadQueue() {
+  try {
+    return asQueue(JSON.parse(localStorage.getItem("vid-sync-queue") || "null"));
+  } catch {
+    return {};
+  }
+}
+
+// Queue entries in the order they should appear
+function queuedVideos() {
+  return Object.values(queue).sort((a, b) => a.index - b.index);
+}
+
 function dedupeQueue() {
-    for(let i = queue.length - 1; i >= 0; i--) {
-        const item = queue[i];
-        if (item.url) {
-            const index = queue.findIndex((item) => item.url === item.url);
-            if (index > i) {
-                queue.splice(i, 1);
-            }
-        }
-    }
+  const seen = new Set();
+  for (const item of Object.values(queue)) {
+    if (!item?.url) continue;
+    if (seen.has(item.url)) delete queue[item.id];
+    else seen.add(item.url);
+  }
 }
 
 dedupeQueue();
@@ -282,26 +297,35 @@ function saveQueue(force) {
   localStorage.setItem("vid-sync-queue", JSON.stringify(queue));
 }
 
+function queuedItem(item) {
+  if (item?.id && queue[item.id]) return queue[item.id];
+  return Object.values(queue).find((entry) => entry.url === item?.url) || null;
+}
+
+function renumberQueue() {
+  const items = queuedVideos();
+  for (let i = 0; i < items.length; i++) items[i].index = i + 1;
+}
+
 function playListedVideo(item) {
-  const at = queue.indexOf(item);
-  const queuedAt = at >= 0 ? at : queue.findIndex((entry) => entry.url === item.url);
+  const queued = queuedItem(item);
   videoState.playing = true;
   setCurrentVideo(item);
-  if (queuedAt < 0) {
+  if (!queued) {
     render();
     return;
   }
-  queue.splice(queuedAt, 1);
-  for (let i = 0; i < queue.length; i++) queue[i].index = i + 1;
+  delete queue[queued.id];
+  renumberQueue();
   saveQueue();
   render();
 }
 
 function removeFromQueue(item) {
-  const at = queue.indexOf(item);
-  if (at < 0) return;
-  queue.splice(at, 1);
-  for (let i = 0; i < queue.length; i++) queue[i].index = i + 1;
+  const queued = queuedItem(item);
+  if (!queued) return;
+  delete queue[queued.id];
+  renumberQueue();
   saveQueue();
   render();
 }
@@ -335,7 +359,7 @@ function renderNowPlaying() {
 
 function render() {
   renderNowPlaying();
-  renderList(queueList, queue, true);
+  renderList(queueList, queuedVideos(), true);
   renderList(historyList, history);
 }
 
@@ -418,7 +442,8 @@ Rtc.onMessage((message) => {
             }
             break;
         case "queue":
-            queue = message.blob;
+            queue = asQueue(message.blob);
+            render();
             break;
         case "history":
             history = message.blob;
@@ -461,10 +486,11 @@ function liveVideoUpdate() {
 
 function takeNextQueuedVideo() {
   if(!player.ended) return false;
-  if(!queue.length) return true;
-  const video = queue.shift();
+  const next = queuedVideos()[0];
+  if(!next) return true;
+  delete queue[next.id];
   saveQueue();
-  setCurrentVideo(video);
+  setCurrentVideo(next);
   render();
   return true;
 }
@@ -498,9 +524,10 @@ function markQueueDrop(insertAt) {
 function reorderQueue(from, to) {
   if (to > from) to -= 1;
   if (from === to) return;
-  const [item] = queue.splice(from, 1);
-  queue.splice(to, 0, item);
-  for (let i = 0; i < queue.length; i++) queue[i].index = i + 1;
+  const items = queuedVideos();
+  const [item] = items.splice(from, 1);
+  items.splice(to, 0, item);
+  for (let i = 0; i < items.length; i++) items[i].index = i + 1;
   saveQueue();
   render();
 }
@@ -609,16 +636,18 @@ urlInput.addEventListener("input", clearUrlError);
 
 function newID() {
   let id = crypto.randomUUID().slice(0, 8);
-  while(queue.some((item) => item.id === id) || history.some((item) => item.id === id)) {
+  while(queue[id] || history.some((item) => item.id === id)) {
     id = crypto.randomUUID().slice(0, 8);
   }
   return id;
 }
 
 function addVideoToQueue(url) {
-  const last = queue[queue.length - 1];
+  const items = queuedVideos();
+  const last = items[items.length - 1];
   const index = last ? last.index + 1 : 1;
-  queue.push({ id: newID(), index, url, thumb: "", time:  unixtime() });
+  const id = newID();
+  queue[id] = { id, index, url, thumb: "", time: unixtime() };
   saveQueue(true);
 }
 
@@ -630,7 +659,7 @@ addForm.addEventListener("submit", (event) => {
     urlInput.focus();
     return;
   }
-  if (queue.some((item) => item.url === url)) {
+  if (Object.values(queue).some((item) => item.url === url)) {
     showUrlError("URL already in queue");
     urlInput.focus();
     return;
