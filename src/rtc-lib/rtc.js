@@ -32,6 +32,12 @@
 
   const SERVERS = [
     {
+      id: "wlf",
+      name: "wlf.io",
+      kind: "mqtt",
+      url: "wss://mqtt.wlf.io/mqtt",
+    },
+    {
       id: "mosquitto",
       name: "Eclipse Mosquitto",
       kind: "mqtt",
@@ -890,7 +896,16 @@
   }
 
   function normalizeKind(value) {
-    return value === "mqtt" || value === "tracker" ? value : "";
+    switch(value) {
+      case "m":
+      case "mqtt":
+        return "mqtt";
+      case "t":
+      case "tracker":
+        return "tracker";
+      default:
+        return "";
+    }
   }
 
   function parseServerUrl(value) {
@@ -915,8 +930,30 @@
     return { id: "custom", name: url, kind, url };
   }
 
-  function getHashData() {
-    const hash = location.hash.slice(1);
+  function minifyHashData(data) {
+    const result = {};
+    if(data.server) result.s = data.server == "custom" ? "c" : data.server;
+    if(data.kind) result.k = data.kind == "mqtt" ? "m" : (data.kind == "tracker" ? "t" : data.kind);
+    if(data.url) result.u = data.url;
+    if(data.secret) result.x = data.secret;
+    return result;
+  }
+
+  function expandHashData(data) {
+    const result = {};
+    if(data.s) result.server = data.s;
+    if(data.k) result.kind = data.k;
+    if(data.u) result.url = data.u;
+    if(data.x) result.secret = data.x;
+    return result;
+  }
+  
+  function getHashData(hash) {
+    hash = hash || location.hash.slice(1);
+    if(hash.startsWith("!")) {
+      hash = hash.slice(1);
+      return expandHashData(getHashData(atob(hash)));
+    }
     // Split the hash string (like a query string) into a key-value object, using & and first = as separators
     const result = {};
     if (hash) {
@@ -941,6 +978,7 @@
     mounted = true;
     const hashData = getHashData();
     let serverId = hashData.server || storageGet(localStorage, "rtc-lib:server") || SERVERS[0].id;
+    if(serverId === "c") serverId = "custom";
     if (serverId !== "custom" && !SERVERS.some((server) => server.id === serverId)) serverId = SERVERS[0].id;
     let customKind = normalizeKind(storageGet(localStorage, "rtc-lib:custom-kind")) || "mqtt";
     let customUrl = storageGet(localStorage, "rtc-lib:custom-url");
@@ -1053,9 +1091,10 @@
         delete data.kind;
         delete data.url;
       }
-      const keys = preferred.concat(Object.keys(data).filter((key) => !preferred.includes(key)));
-      const hash = keys.map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(data[key] ?? "")).join("&");
-      return location.origin + location.pathname + location.search + "#" + hash;
+      const minified = minifyHashData(data);
+      const keys = Object.keys(minified);
+      const hash = keys.map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(minified[key] ?? "")).join("&");
+      return location.origin + location.pathname + location.search + "#!" + btoa(hash);
     }
 
     async function copyPageLink() {
