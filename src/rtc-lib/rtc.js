@@ -4,12 +4,25 @@
 //     Required before the dialog is shown. The secret entered in the dialog
 //     is mixed with baseSecret first, so two apps stay apart when people
 //     type the same secret.
+//   Rtc.getHash() -> Promise<string>
+//     SHA-256 hex of the current secret after it is mixed with the base secret.
+//     The same value for everyone who enters that secret in this app.
 //   Rtc.peers() -> [{ id, name }]
 //   Rtc.send(peerId, id, name, blob)
 //   Rtc.sendAll(id, name, blob)
 //   Rtc.onMessage((message) => {})
 //     message is { id, name, blob, peer }
 //     peer is { id, name } for the sender
+//     returns a function that removes the hook
+//   Rtc.getSession() -> { name, server } | null
+//     null when no session is active
+//     server is { id, name, kind, url }
+//   Rtc.onSessionOpen((session) => {})
+//   Rtc.onSessionClose((session) => {})
+//     session is { name, server }
+//     server is { id, name, kind, url }
+//     fired when the signaling session is established, and when that session
+//     ends because the user disconnects or the server drops the connection
 //     returns a function that removes the hook
 //   Rtc.onPeerConnect((peer) => {})
 //   Rtc.onPeerDisconnect((peer) => {})
@@ -63,12 +76,23 @@
     },
   ];
 
+  const MIN_SECRET_LENGTH = 16;
+
+  function secretLengthError(secret) {
+    if (!secret) return "Enter a shared secret.";
+    if (secret.length < MIN_SECRET_LENGTH) return "Shared secret must be at least 16 characters.";
+    return "";
+  }
+
   const messageHandlers = new Set();
+  const sessionOpenHandlers = new Set();
+  const sessionCloseHandlers = new Set();
   const peerConnectHandlers = new Set();
   const peerDisconnectHandlers = new Set();
   let active = null;
   let mounted = false;
   let baseSecret = null;
+  let readSecret = () => "";
 
   const Rtc = {
     init(secret) {
@@ -83,6 +107,15 @@
     peers() {
       return active ? active.peers() : [];
     },
+    getSession() {
+      return active ? active.info() : null;
+    },
+    async getHash() {
+      if (baseSecret === null) throw new Error("Call Rtc.init before connecting.");
+      if (!crypto.subtle) throw new Error("A secure page is required to connect.");
+      const mixed = await mixSecret(readSecret());
+      return bytesToHex(await sha256(mixed));
+    },
     send(peerId, id, name, blob) {
       if (!active) throw new Error("Not connected");
       active.send(peerId, id, name, blob);
@@ -95,6 +128,16 @@
       if (typeof handler !== "function") throw new TypeError("handler must be a function");
       messageHandlers.add(handler);
       return () => messageHandlers.delete(handler);
+    },
+    onSessionOpen(handler) {
+      if (typeof handler !== "function") throw new TypeError("handler must be a function");
+      sessionOpenHandlers.add(handler);
+      return () => sessionOpenHandlers.delete(handler);
+    },
+    onSessionClose(handler) {
+      if (typeof handler !== "function") throw new TypeError("handler must be a function");
+      sessionCloseHandlers.add(handler);
+      return () => sessionCloseHandlers.delete(handler);
     },
     onPeerConnect(handler) {
       if (typeof handler !== "function") throw new TypeError("handler must be a function");
@@ -819,6 +862,8 @@
     let ready = false;
     let transport = null;
     if (baseSecret === null) throw new Error("Call Rtc.init before connecting.");
+    const lengthError = secretLengthError(options.secret);
+    if (lengthError) throw new Error(lengthError);
     const mixed = await mixSecret(options.secret);
     const key = await deriveKey(mixed);
     const digest = await sha256(mixed);
@@ -840,14 +885,43 @@
       stop() {
         shutdown();
       },
+      info() {
+        return {
+          name: sessionInfo.name,
+          server: {
+            id: sessionInfo.server.id,
+            name: sessionInfo.server.name,
+            kind: sessionInfo.server.kind,
+            url: sessionInfo.server.url,
+          },
+        };
+      },
     };
+
+    const server = options.server;
+    const sessionInfo = {
+      name: options.name,
+      server: { id: server.id, name: server.name, kind: server.kind, url: server.url },
+    };
+
+    function emitSession(handlers) {
+      for (const handler of handlers) {
+        try {
+          handler(sessionInfo);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    }
 
     function shutdown() {
       if (stopped) return false;
+      const wasOpen = ready;
       stopped = true;
       transport?.stop();
       pool.close();
       if (active === session) active = null;
+      if (wasOpen) emitSession(sessionCloseHandlers);
       return true;
     }
 
@@ -876,6 +950,7 @@
 
     ready = true;
     active = session;
+    emitSession(sessionOpenHandlers);
     return session;
   }
 
@@ -1034,12 +1109,16 @@
     peersButton.setAttribute("title", "Peers");
     peersButton.setAttribute("aria-expanded", "false");
     peersButton.setAttribute("aria-controls", "rtc-peer-panel");
+    peersButton.classList.add("rtc-peers-button");
+    const peerCount = document.createElement("span");
+    peerCount.className = "rtc-peer-count";
+    peerCount.textContent = "0";
     peersButton.append(trayIcon([
       { tag: "path", attrs: { d: "M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" } },
       { tag: "circle", attrs: { cx: "9", cy: "7", r: "4" } },
       { tag: "path", attrs: { d: "M22 21v-2a4 4 0 0 0-3-3.87" } },
       { tag: "path", attrs: { d: "M16 3.13a4 4 0 0 1 0 7.75" } },
-    ]));
+    ]), peerCount);
     const peerPanel = document.createElement("div");
     peerPanel.id = "rtc-peer-panel";
     peerPanel.className = "rtc-peer-panel";
@@ -1077,6 +1156,8 @@
       const field = root.querySelector("input[name=rtc-room-key]");
       return field ? field.value : draft.secret;
     }
+
+    readSecret = currentSecret;
 
     function pageLink() {
       const data = getHashData();
@@ -1165,6 +1246,14 @@
       if (next) paintPeerPanel();
     }
 
+    function paintPeerCount() {
+      const count = active ? Rtc.peers().length : 0;
+      peerCount.textContent = String(count);
+      const label = count === 1 ? "1 peer" : count + " peers";
+      peersButton.setAttribute("aria-label", label);
+      peersButton.setAttribute("title", label);
+    }
+
     function paintPeers() {
       const list = Rtc.peers();
       if (summary) {
@@ -1176,6 +1265,7 @@
             : count + " peers";
         peers.textContent = list.map(peerLabel).join(", ");
       }
+      paintPeerCount();
       if (!peerPanel.hidden) paintPeerPanel();
     }
 
@@ -1185,6 +1275,7 @@
       dot.setAttribute("aria-label", connected ? "Connected" : "Not connected");
       linkButton.hidden = !connected;
       peersButton.hidden = !connected;
+      paintPeerCount();
       if (!connected) setPeersOpen(false);
       trayButton.setAttribute("aria-expanded", String(!!root.querySelector(".rtc-scrim")));
     }
@@ -1199,6 +1290,7 @@
     }
 
     function closeDialog() {
+      if (!active) return;
       destroyDialog();
       paintTray();
       trayButton.focus();
@@ -1210,6 +1302,11 @@
       const secret = draft.secret;
       const server = chosenServer();
       if (!server) return;
+      const lengthError = secretLengthError(secret);
+      if (lengthError) {
+        showForm(lengthError);
+        return;
+      }
       connecting = true;
       const connectButton = root.querySelector(".rtc-connect");
       const disconnectButton = root.querySelector(".rtc-disconnect");
@@ -1566,9 +1663,11 @@
           error.textContent = "Enter a handle.";
           return;
         }
-        if (!draft.secret) {
+        const lengthError = secretLengthError(draft.secret);
+        if (lengthError) {
           error.hidden = false;
-          error.textContent = "Enter a shared secret.";
+          error.textContent = lengthError;
+          secretInput.focus();
           return;
         }
         if (draft.server === "custom" && !chosenServer()) {
@@ -1581,19 +1680,22 @@
         startConnect();
       });
 
-      const close = document.createElement("button");
-      close.type = "button";
-      close.className = "rtc-close";
-      close.setAttribute("aria-label", "Close");
-      close.textContent = "×";
-      close.addEventListener("click", () => closeDialog());
       const dialog = document.createElement("div");
       dialog.id = "rtc-dialog";
       dialog.className = "rtc-dialog";
       dialog.setAttribute("role", "dialog");
       dialog.setAttribute("aria-modal", "true");
       dialog.setAttribute("aria-labelledby", "rtc-title");
-      dialog.append(close, form);
+      if (active) {
+        const close = document.createElement("button");
+        close.type = "button";
+        close.className = "rtc-close";
+        close.setAttribute("aria-label", "Close");
+        close.textContent = "×";
+        close.addEventListener("click", () => closeDialog());
+        dialog.append(close);
+      }
+      dialog.append(form);
       const scrim = document.createElement("div");
       scrim.className = "rtc-scrim";
       scrim.append(dialog);
@@ -1618,6 +1720,7 @@
 
     const savedHandle = draft.name.trim();
     const hashServer = serverFromHash(hashData);
+    console.log("hashData:", hashData, hashServer);
     if (savedHandle && hashData.secret && hashServer) {
       draft.name = savedHandle;
       draft.secret = hashData.secret;

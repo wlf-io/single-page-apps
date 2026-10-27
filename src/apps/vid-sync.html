@@ -57,7 +57,7 @@
     <form id="queue-add-form">
       <h2 id="queue-add-title">Add to queue</h2>
       <label class="field" for="queue-url">URL
-        <input id="queue-url" name="url" type="text" spellcheck="false" autocomplete="off" placeholder="Paste a video URL" aria-describedby="queue-url-error" />
+        <textarea id="queue-url" name="url" rows="6" spellcheck="false" autocomplete="off" placeholder="One video URL per line" aria-describedby="queue-url-error"></textarea>
         <p class="url-error" id="queue-url-error" role="alert" hidden></p>
       </label>
       <div class="actions">

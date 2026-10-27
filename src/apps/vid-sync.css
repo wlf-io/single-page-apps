@@ -394,7 +394,7 @@ h1,
     font-size: 0.8rem;
 }
 
-.add-dialog input {
+.add-dialog textarea {
     width: 100%;
     padding: 0.5rem 0.65rem;
     color: var(--text);
@@ -403,9 +403,10 @@ h1,
     border-radius: 8px;
     font: inherit;
     font-size: 0.95rem;
+    resize: vertical;
 }
 
-.add-dialog input:focus {
+.add-dialog textarea:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 2px var(--accent-soft);
@@ -420,8 +421,8 @@ h1,
     display: none;
 }
 
-.add-dialog input[aria-invalid="true"],
-.add-dialog input[aria-invalid="true"]:focus {
+.add-dialog textarea[aria-invalid="true"],
+.add-dialog textarea[aria-invalid="true"]:focus {
     border-color: #f07070;
     box-shadow: 0 0 0 2px rgba(240, 112, 112, 0.25);
 }

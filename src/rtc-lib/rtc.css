@@ -403,3 +403,24 @@
   color: var(--rtc-accent);
   border-color: var(--rtc-accent);
 }
+
+.rtc-tray-button.rtc-peers-button[hidden] {
+  display: none;
+}
+
+.rtc-tray-button.rtc-peers-button {
+  display: flex;
+  gap: 0.22rem;
+  align-items: center;
+  width: auto;
+  padding: 0 0.42rem 0 0.38rem;
+  border-radius: 999px;
+}
+
+.rtc-peer-count {
+  color: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
