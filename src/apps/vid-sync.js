@@ -45,7 +45,7 @@ const videoState = {
 
 function createHtmlPlayer(mount, url) {
   const media = document.createElement("video");
-  media.controls = true;
+  media.controls = false;
   media.playsInline = true;
   media.autoplay = false;
 

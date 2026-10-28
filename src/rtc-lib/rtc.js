@@ -77,10 +77,14 @@
   ];
 
   const MIN_SECRET_LENGTH = 16;
+  const STALE_OFFER_MS = 25000;
+
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
 
   function secretLengthError(secret) {
     if (!secret) return "Enter a shared secret.";
-    if (secret.length < MIN_SECRET_LENGTH) return "Shared secret must be at least 16 characters.";
+    if (secret.length < MIN_SECRET_LENGTH) return "Shared secret must be at least " + MIN_SECRET_LENGTH + " characters.";
     return "";
   }
 
@@ -112,6 +116,7 @@
     },
     async getHash() {
       if (baseSecret === null) throw new Error("Call Rtc.init before connecting.");
+      if (active) return active.hash;
       if (!crypto.subtle) throw new Error("A secure page is required to connect.");
       const mixed = await mixSecret(readSecret());
       return bytesToHex(await sha256(mixed));
@@ -125,33 +130,39 @@
       active.sendAll(id, name, blob);
     },
     onMessage(handler) {
-      if (typeof handler !== "function") throw new TypeError("handler must be a function");
-      messageHandlers.add(handler);
-      return () => messageHandlers.delete(handler);
+      return addHandler(messageHandlers, handler);
     },
     onSessionOpen(handler) {
-      if (typeof handler !== "function") throw new TypeError("handler must be a function");
-      sessionOpenHandlers.add(handler);
-      return () => sessionOpenHandlers.delete(handler);
+      return addHandler(sessionOpenHandlers, handler);
     },
     onSessionClose(handler) {
-      if (typeof handler !== "function") throw new TypeError("handler must be a function");
-      sessionCloseHandlers.add(handler);
-      return () => sessionCloseHandlers.delete(handler);
+      return addHandler(sessionCloseHandlers, handler);
     },
     onPeerConnect(handler) {
-      if (typeof handler !== "function") throw new TypeError("handler must be a function");
-      peerConnectHandlers.add(handler);
-      return () => peerConnectHandlers.delete(handler);
+      return addHandler(peerConnectHandlers, handler);
     },
     onPeerDisconnect(handler) {
-      if (typeof handler !== "function") throw new TypeError("handler must be a function");
-      peerDisconnectHandlers.add(handler);
-      return () => peerDisconnectHandlers.delete(handler);
+      return addHandler(peerDisconnectHandlers, handler);
     },
   };
 
   globalThis.Rtc = Rtc;
+
+  function addHandler(handlers, handler) {
+    if (typeof handler !== "function") throw new TypeError("handler must be a function");
+    handlers.add(handler);
+    return () => handlers.delete(handler);
+  }
+
+  function emit(handlers, payload) {
+    for (const handler of handlers) {
+      try {
+        handler(payload);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  }
 
   function concat(parts) {
     const size = parts.reduce((sum, part) => sum + part.length, 0);
@@ -191,9 +202,7 @@
   }
 
   function bytesToBase64(bytes) {
-    let text = "";
-    for (let i = 0; i < bytes.length; i++) text += String.fromCharCode(bytes[i]);
-    return btoa(text);
+    return btoa(bytesToBinary(bytes));
   }
 
   function base64ToBytes(text) {
@@ -215,7 +224,7 @@
   }
 
   function mqttString(text) {
-    const bytes = new TextEncoder().encode(text);
+    const bytes = encoder.encode(text);
     return concat([Uint8Array.of((bytes.length >> 8) & 255, bytes.length & 255), bytes]);
   }
 
@@ -246,26 +255,26 @@
   }
 
   async function sha256(text) {
-    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+    const digest = await crypto.subtle.digest("SHA-256", encoder.encode(text));
     return new Uint8Array(digest);
   }
 
   async function mixSecret(secret) {
     const key = await crypto.subtle.importKey(
       "raw",
-      new TextEncoder().encode("c34ab811-02cc-4963-9d47-57ed3b683173-" + location.host + "-" + baseSecret),
+      encoder.encode("c34ab811-02cc-4963-9d47-57ed3b683173-" + location.host + "-" + baseSecret),
       { name: "HMAC", hash: "SHA-256" },
       false,
       ["sign"]
     );
-    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(secret)));
+    const mac = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(secret)));
     return bytesToHex(mac);
   }
 
   async function deriveKey(secret) {
     const material = await crypto.subtle.importKey(
       "raw",
-      new TextEncoder().encode(secret),
+      encoder.encode(secret),
       "PBKDF2",
       false,
       ["deriveKey"]
@@ -273,7 +282,7 @@
     return crypto.subtle.deriveKey(
       {
         name: "PBKDF2",
-        salt: new TextEncoder().encode("rtc-lib/v1"),
+        salt: encoder.encode("rtc-lib/v1"),
         iterations: 100000,
         hash: "SHA-256",
       },
@@ -286,7 +295,7 @@
 
   async function seal(key, value) {
     const iv = randomBytes(12);
-    const plain = new TextEncoder().encode(JSON.stringify(value));
+    const plain = encoder.encode(JSON.stringify(value));
     const cipher = new Uint8Array(await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, plain));
     return bytesToBase64(concat([iv, cipher]));
   }
@@ -299,7 +308,7 @@
         key,
         packed.slice(12)
       );
-      return JSON.parse(new TextDecoder().decode(plain));
+      return JSON.parse(decoder.decode(plain));
     } catch {
       return null;
     }
@@ -340,22 +349,16 @@
     return pc.localDescription.sdp;
   }
 
+  function isLive(pc) {
+    return pc.connectionState !== "failed" && pc.connectionState !== "closed";
+  }
+
   function createPool(selfId, myName, onChange) {
     const peers = new Map();
     const connected = new Set();
 
     function preferred(initiated, remoteId) {
       return (selfId < remoteId) === initiated;
-    }
-
-    function emit(handlers, payload) {
-      for (const handler of handlers) {
-        try {
-          handler(payload);
-        } catch (err) {
-          console.error(err);
-        }
-      }
     }
 
     function emitMessage(record, message) {
@@ -382,8 +385,20 @@
       if (wasConnected) emitPeer(peerDisconnectHandlers, record);
     }
 
+    // pc.close() fires no connectionstatechange or channel close events, so
+    // the record has to be dropped by hand.
+    function remove(remoteId, pc) {
+      const record = peers.get(remoteId);
+      const target = pc || record?.pc;
+      target?.close();
+      if (record && record.pc === target) drop(record, null, target);
+    }
+
     function bindChannel(record, channel) {
-      if (record.channel && record.channel !== channel) channel.close();
+      if (record.channel && record.channel !== channel) {
+        channel.close();
+        return;
+      }
       record.channel = channel;
       channel.onmessage = (event) => {
         let message;
@@ -417,7 +432,7 @@
 
     function attach(remoteId, name, pc, channel, initiated) {
       const prev = peers.get(remoteId);
-      if (prev && prev.pc.connectionState !== "failed" && prev.pc.connectionState !== "closed") {
+      if (prev && isLive(prev.pc)) {
         const keepPrevious = preferred(prev.initiated, remoteId) || !preferred(initiated, remoteId);
         if (keepPrevious) {
           if (name) prev.name = name;
@@ -432,6 +447,7 @@
         pc,
         channel: null,
         initiated,
+        createdAt: Date.now(),
       };
       peers.set(remoteId, record);
       pc.onconnectionstatechange = () => {
@@ -487,13 +503,14 @@
       for (const record of leaving) emitPeer(peerDisconnectHandlers, record);
     }
 
-    return { peers, attach, list, send, sendAll, close };
+    return { peers, attach, remove, list, send, sendAll, close };
   }
 
   function openSocket(url, protocols, serverName) {
     const ws = protocols ? new WebSocket(url, protocols) : new WebSocket(url);
     const opened = new Promise((resolve, reject) => {
       const timer = setTimeout(() => {
+        ws.close();
         reject(new Error("Timed out reaching " + serverName + "."));
       }, 8000);
       ws.addEventListener("open", () => {
@@ -542,34 +559,13 @@
 
     ws.addEventListener("close", () => wakeInbox());
 
-    await opened;
-    if (options.stopped()) throw new Error(options.server.name + " closed the connection.");
-
-    const clientId = "rtc" + bytesToHex(randomBytes(8));
-    ws.send(mqttPacket(
-      0x10,
-      concat([
-        mqttString("MQTT"),
-        Uint8Array.of(4, 0x02),
-        Uint8Array.of(0, 30),
-        mqttString(clientId),
-      ])
-    ));
-
-    const connack = await Promise.race([
-      nextPacket(),
-      new Promise((_, reject) => {
-        setTimeout(() => reject(new Error(options.server.name + " did not accept the connection.")), 8000);
-      }),
-    ]);
-    if ((connack.type & 0xf0) !== 0x20 || connack.body[1] !== 0) {
-      throw new Error(options.server.name + " refused the connection.");
+    function waitForConnack() {
+      let timer = 0;
+      const timeout = new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error(options.server.name + " did not accept the connection.")), 8000);
+      });
+      return Promise.race([nextPacket(), timeout]).finally(() => clearTimeout(timer));
     }
-
-    ws.send(mqttPacket(0x82, concat([Uint8Array.of(0, 1), mqttString(topic), Uint8Array.of(0)])));
-    pingTimer = setInterval(() => {
-      if (ws.readyState === WebSocket.OPEN) ws.send(new Uint8Array([0xc0, 0x00]));
-    }, 20000);
 
     const seen = new Set();
     const offering = new Set();
@@ -577,7 +573,8 @@
     async function publish(inner) {
       if (ws.readyState !== WebSocket.OPEN) return;
       const box = await seal(key, inner);
-      ws.send(mqttPacket(0x30, concat([mqttString(topic), new TextEncoder().encode(JSON.stringify({ box }))])));
+      if (ws.readyState !== WebSocket.OPEN) return;
+      ws.send(mqttPacket(0x30, concat([mqttString(topic), encoder.encode(JSON.stringify({ box }))])));
     }
 
     function publishHello() {
@@ -587,7 +584,10 @@
     async function offer(remoteId, name) {
       if (options.stopped() || offering.has(remoteId)) return;
       const existing = pool.peers.get(remoteId);
-      if (existing && existing.pc.connectionState !== "failed" && existing.pc.connectionState !== "closed") return;
+      if (existing && isLive(existing.pc)) {
+        if (existing.channel?.readyState === "open" || Date.now() - existing.createdAt < STALE_OFFER_MS) return;
+        pool.remove(remoteId);
+      }
       offering.add(remoteId);
       const pc = createPeerConnection();
       const channel = pc.createDataChannel("data");
@@ -598,20 +598,40 @@
         if (options.stopped() || pool.peers.get(remoteId)?.pc !== pc) return;
         await publish({ from: selfId, to: remoteId, kind: "offer", name: options.name, sdp });
       } catch {
-        if (pool.peers.get(remoteId)?.pc === pc) pc.close();
+        pool.remove(remoteId, pc);
       } finally {
         offering.delete(remoteId);
       }
     }
 
     async function acceptOffer(remoteId, name, sdp) {
+      // Only the higher id offers, so a new offer means the remote gave up on
+      // any earlier attempt that has not opened.
+      const existing = pool.peers.get(remoteId);
+      if (existing && existing.channel?.readyState !== "open") pool.remove(remoteId);
       const pc = createPeerConnection();
       const record = pool.attach(remoteId, name, pc, null, false);
       if (record.pc !== pc) return;
-      await pc.setRemoteDescription({ type: "offer", sdp });
-      const answer = await describe(pc, "answer");
-      if (options.stopped() || pool.peers.get(remoteId)?.pc !== pc) return;
-      await publish({ from: selfId, to: remoteId, kind: "answer", name: options.name, sdp: answer });
+      try {
+        await pc.setRemoteDescription({ type: "offer", sdp });
+        const answer = await describe(pc, "answer");
+        if (options.stopped() || pool.peers.get(remoteId)?.pc !== pc) return;
+        await publish({ from: selfId, to: remoteId, kind: "answer", name: options.name, sdp: answer });
+      } catch (err) {
+        pool.remove(remoteId, pc);
+        throw err;
+      }
+    }
+
+    async function acceptAnswer(remoteId, sdp) {
+      const record = pool.peers.get(remoteId);
+      if (!record || record.pc.signalingState !== "have-local-offer") return;
+      try {
+        await record.pc.setRemoteDescription({ type: "answer", sdp });
+      } catch (err) {
+        pool.remove(remoteId, record.pc);
+        throw err;
+      }
     }
 
     async function handle(inner) {
@@ -631,28 +651,23 @@
         return;
       }
       if (inner.kind === "bye") {
-        const record = pool.peers.get(inner.from);
         seen.delete(inner.from);
-        if (record) record.pc.close();
+        pool.remove(inner.from);
         return;
       }
       if (typeof inner.sdp !== "string") return;
       if (inner.kind === "offer") await acceptOffer(inner.from, name, inner.sdp);
-      if (inner.kind === "answer") {
-        const record = pool.peers.get(inner.from);
-        if (!record || record.pc.signalingState !== "have-local-offer") return;
-        await record.pc.setRemoteDescription({ type: "answer", sdp: inner.sdp });
-      }
+      if (inner.kind === "answer") await acceptAnswer(inner.from, inner.sdp);
     }
 
-    (async () => {
+    async function receive() {
       while (!options.stopped() && ws.readyState === WebSocket.OPEN) {
         const packet = await nextPacket();
         if (options.stopped() || !packet) return;
         if ((packet.type & 0xf0) !== 0x30) continue;
         const topicLength = (packet.body[0] << 8) | packet.body[1];
         if (packet.body.length < 2 + topicLength) continue;
-        const payload = new TextDecoder().decode(packet.body.slice(2 + topicLength));
+        const payload = decoder.decode(packet.body.slice(2 + topicLength));
         try {
           const outer = JSON.parse(payload);
           await handle(await open(key, outer.box));
@@ -660,23 +675,58 @@
           console.error(err);
         }
       }
-    })();
+    }
 
-    await publishHello();
-    const helloTimer = setInterval(() => {
-      if (!options.stopped()) publishHello();
-    }, 12000);
+    let helloTimer = 0;
+    try {
+      await opened;
+      if (options.stopped()) throw new Error(options.server.name + " closed the connection.");
+
+      const clientId = "rtc" + bytesToHex(randomBytes(8));
+      ws.send(mqttPacket(
+        0x10,
+        concat([
+          mqttString("MQTT"),
+          Uint8Array.of(4, 0x02),
+          Uint8Array.of(0, 30),
+          mqttString(clientId),
+        ])
+      ));
+
+      const connack = await waitForConnack();
+      if (!connack || (connack.type & 0xf0) !== 0x20 || connack.body[1] !== 0) {
+        throw new Error(options.server.name + " refused the connection.");
+      }
+
+      ws.send(mqttPacket(0x82, concat([Uint8Array.of(0, 1), mqttString(topic), Uint8Array.of(0)])));
+      pingTimer = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send(new Uint8Array([0xc0, 0x00]));
+      }, 20000);
+
+      receive();
+      await publishHello();
+      helloTimer = setInterval(() => {
+        if (!options.stopped()) publishHello();
+      }, 12000);
+    } catch (err) {
+      clearInterval(pingTimer);
+      clearInterval(helloTimer);
+      ws.close();
+      throw err;
+    }
 
     return {
       socket: ws,
       stop() {
         clearInterval(pingTimer);
         clearInterval(helloTimer);
-        if (ws.readyState === WebSocket.OPEN) {
-          publish({ from: selfId, to: null, kind: "bye", name: options.name });
-          ws.send(new Uint8Array([0xe0, 0x00]));
-          ws.close();
-        }
+        if (ws.readyState !== WebSocket.OPEN) return;
+        publish({ from: selfId, to: null, kind: "bye", name: options.name })
+          .catch(() => {})
+          .then(() => {
+            if (ws.readyState === WebSocket.OPEN) ws.send(new Uint8Array([0xe0, 0x00]));
+            ws.close();
+          });
       },
     };
   }
@@ -701,7 +751,19 @@
       const others = lastStats ? Math.max(0, lastStats.complete + lastStats.incomplete - 1) : 0;
       const interval = ((lastStats && lastStats.interval) || 120) * 1000;
       const delay = pool.list().length < others ? Math.min(5000, interval) : interval;
-      retryTimer = setTimeout(() => announce(), delay);
+      retryTimer = setTimeout(() => announce().catch((err) => console.error(err)), delay);
+    }
+
+    async function createOffer() {
+      const pc = createPeerConnection();
+      try {
+        const channel = pc.createDataChannel("data");
+        const sdp = await seal(key, { sdp: await describe(pc, "offer"), name: options.name });
+        return { offerId: bytesToBinary(randomBytes(20)), pc, channel, sdp };
+      } catch (err) {
+        pc.close();
+        throw err;
+      }
     }
 
     async function announce() {
@@ -709,7 +771,7 @@
       announcing = true;
       try {
         for (const [offerId, item] of pending) {
-          if (Date.now() - item.at > 25000) {
+          if (Date.now() - item.at > STALE_OFFER_MS) {
             item.pc.close();
             pending.delete(offerId);
           }
@@ -717,24 +779,18 @@
         const others = lastStats ? Math.max(0, lastStats.complete + lastStats.incomplete - 1) : 0;
         const missing = Math.max(0, others - pool.list().length);
         const count = Math.min(5, Math.max(2, missing || 2));
+        const results = await Promise.allSettled(Array.from({ length: count }, () => createOffer()));
+        const made = results.filter((result) => result.status === "fulfilled").map((result) => result.value);
+        const failed = results.find((result) => result.status === "rejected");
+        if (failed || options.stopped()) {
+          for (const item of made) item.pc.close();
+          if (failed) throw failed.reason;
+          return;
+        }
         const offers = [];
-        for (let i = 0; i < count; i++) {
-          if (options.stopped()) return;
-          const pc = createPeerConnection();
-          try {
-            const channel = pc.createDataChannel("data");
-            const offerId = bytesToBinary(randomBytes(20));
-            const sdp = await seal(key, { sdp: await describe(pc, "offer"), name: options.name });
-            if (options.stopped()) {
-              pc.close();
-              return;
-            }
-            pending.set(offerId, { pc, channel, at: Date.now() });
-            offers.push({ offer: { type: "offer", sdp }, offer_id: offerId });
-          } catch (err) {
-            pc.close();
-            throw err;
-          }
+        for (const item of made) {
+          pending.set(item.offerId, { pc: item.pc, channel: item.channel, at: Date.now() });
+          offers.push({ offer: { type: "offer", sdp: item.sdp }, offer_id: item.offerId });
         }
         const message = {
           action: "announce",
@@ -762,20 +818,25 @@
       const pc = createPeerConnection();
       const record = pool.attach(remoteId, openedSdp.name || "", pc, null, false);
       if (record.pc !== pc) return;
-      await pc.setRemoteDescription({ type: "offer", sdp: openedSdp.sdp });
-      const answer = await seal(key, { sdp: await describe(pc, "answer"), name: options.name });
-      if (options.stopped() || pool.peers.get(remoteId)?.pc !== pc) return;
-      send({
-        action: "announce",
-        info_hash: infoHash,
-        peer_id: peerId,
-        to_peer_id: data.peer_id,
-        offer_id: data.offer_id,
-        answer: { type: "answer", sdp: answer },
-        downloaded: 0,
-        uploaded: 0,
-        left: 1,
-      });
+      try {
+        await pc.setRemoteDescription({ type: "offer", sdp: openedSdp.sdp });
+        const answer = await seal(key, { sdp: await describe(pc, "answer"), name: options.name });
+        if (options.stopped() || pool.peers.get(remoteId)?.pc !== pc) return;
+        send({
+          action: "announce",
+          info_hash: infoHash,
+          peer_id: peerId,
+          to_peer_id: data.peer_id,
+          offer_id: data.offer_id,
+          answer: { type: "answer", sdp: answer },
+          downloaded: 0,
+          uploaded: 0,
+          left: 1,
+        });
+      } catch (err) {
+        pool.remove(remoteId, pc);
+        throw err;
+      }
     }
 
     async function acceptAnswer(data) {
@@ -790,7 +851,12 @@
       const remoteId = binaryToHex(data.peer_id);
       const record = pool.attach(remoteId, openedSdp.name || "", item.pc, item.channel, true);
       if (record.pc !== item.pc || record.pc.signalingState !== "have-local-offer") return;
-      await record.pc.setRemoteDescription({ type: "answer", sdp: openedSdp.sdp });
+      try {
+        await record.pc.setRemoteDescription({ type: "answer", sdp: openedSdp.sdp });
+      } catch (err) {
+        pool.remove(remoteId, item.pc);
+        throw err;
+      }
     }
 
     ws.addEventListener("message", async (event) => {
@@ -820,17 +886,29 @@
       }
     });
 
-    await opened;
+    let responseTimer = 0;
     const response = new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error(options.server.name + " did not answer.")), 8000);
       sawResponse = (err) => {
-        clearTimeout(timer);
+        sawResponse = null;
+        clearTimeout(responseTimer);
         if (err) reject(err);
         else resolve();
       };
     });
-    await announce();
-    await response;
+
+    try {
+      await opened;
+      await announce();
+      responseTimer = setTimeout(() => sawResponse?.(new Error(options.server.name + " did not answer.")), 8000);
+      await response;
+    } catch (err) {
+      clearTimeout(responseTimer);
+      clearTimeout(retryTimer);
+      for (const item of pending.values()) item.pc.close();
+      pending.clear();
+      ws.close();
+      throw err;
+    }
 
     return {
       socket: ws,
@@ -857,22 +935,30 @@
   async function connect(options) {
     if (!crypto.subtle) throw new Error("A secure page is required to connect.");
     if (typeof RTCPeerConnection !== "function") throw new Error("This browser cannot open WebRTC connections.");
+    if (baseSecret === null) throw new Error("Call Rtc.init before connecting.");
+    const lengthError = secretLengthError(options.secret);
+    if (lengthError) throw new Error(lengthError);
 
     let stopped = false;
     let ready = false;
     let transport = null;
-    if (baseSecret === null) throw new Error("Call Rtc.init before connecting.");
-    const lengthError = secretLengthError(options.secret);
-    if (lengthError) throw new Error(lengthError);
+    const { server } = options;
     const mixed = await mixSecret(options.secret);
     const key = await deriveKey(mixed);
     const digest = await sha256(mixed);
     const idBytes = randomBytes(20);
     const selfId = bytesToHex(idBytes);
-    const pool = createPool(selfId, options.name, () => {
+    const notifyPeers = () => {
       if (ready) options.onPeers();
-    });
+    };
+    const pool = createPool(selfId, options.name, notifyPeers);
+    const sessionInfo = {
+      name: options.name,
+      server: { id: server.id, name: server.name, kind: server.kind, url: server.url },
+    };
+
     const session = {
+      hash: bytesToHex(digest),
       peers() {
         return pool.list();
       },
@@ -886,33 +972,9 @@
         shutdown();
       },
       info() {
-        return {
-          name: sessionInfo.name,
-          server: {
-            id: sessionInfo.server.id,
-            name: sessionInfo.server.name,
-            kind: sessionInfo.server.kind,
-            url: sessionInfo.server.url,
-          },
-        };
+        return { name: sessionInfo.name, server: { ...sessionInfo.server } };
       },
     };
-
-    const server = options.server;
-    const sessionInfo = {
-      name: options.name,
-      server: { id: server.id, name: server.name, kind: server.kind, url: server.url },
-    };
-
-    function emitSession(handlers) {
-      for (const handler of handlers) {
-        try {
-          handler(sessionInfo);
-        } catch (err) {
-          console.error(err);
-        }
-      }
-    }
 
     function shutdown() {
       if (stopped) return false;
@@ -921,28 +983,27 @@
       transport?.stop();
       pool.close();
       if (active === session) active = null;
-      if (wasOpen) emitSession(sessionCloseHandlers);
+      if (wasOpen) emit(sessionCloseHandlers, sessionInfo);
       return true;
     }
 
     const sessionOptions = {
-      server: options.server,
+      server,
       name: options.name,
       digest,
-      onPeers: () => {
-        if (ready) options.onPeers();
-      },
+      onPeers: notifyPeers,
       stopped: () => stopped,
     };
 
     try {
-      transport = options.server.kind === "mqtt"
+      transport = server.kind === "mqtt"
         ? await startMqtt(sessionOptions, pool, selfId, key)
         : await startTracker(sessionOptions, pool, bytesToBinary(idBytes), key);
       transport.socket.addEventListener("close", () => {
         if (!shutdown()) return;
-        if (ready) options.onDown(new Error(options.server.name + " closed the connection."));
+        if (ready) options.onDown(new Error(server.name + " closed the connection."));
       });
+      if (transport.socket.readyState !== WebSocket.OPEN) throw new Error(server.name + " closed the connection.");
     } catch (err) {
       shutdown();
       throw err;
@@ -950,7 +1011,7 @@
 
     ready = true;
     active = session;
-    emitSession(sessionOpenHandlers);
+    emit(sessionOpenHandlers, sessionInfo);
     return session;
   }
 
@@ -971,7 +1032,7 @@
   }
 
   function normalizeKind(value) {
-    switch(value) {
+    switch (value) {
       case "m":
       case "mqtt":
         return "mqtt";
@@ -1007,43 +1068,45 @@
 
   function minifyHashData(data) {
     const result = {};
-    if(data.server) result.s = data.server == "custom" ? "c" : data.server;
-    if(data.kind) result.k = data.kind == "mqtt" ? "m" : (data.kind == "tracker" ? "t" : data.kind);
-    if(data.url) result.u = data.url;
-    if(data.secret) result.x = data.secret;
+    if (data.server) result.s = data.server === "custom" ? "c" : data.server;
+    if (data.kind) result.k = data.kind === "mqtt" ? "m" : data.kind === "tracker" ? "t" : data.kind;
+    if (data.url) result.u = data.url;
+    if (data.secret) result.x = data.secret;
     return result;
   }
 
   function expandHashData(data) {
     const result = {};
-    if(data.s) result.server = data.s;
-    if(data.k) result.kind = data.k;
-    if(data.u) result.url = data.u;
-    if(data.x) result.secret = data.x;
+    if (data.s) result.server = data.s === "c" ? "custom" : data.s;
+    if (data.k) result.kind = data.k;
+    if (data.u) result.url = data.u;
+    if (data.x) result.secret = data.x;
     return result;
   }
-  
-  function getHashData(hash) {
-    hash = hash || location.hash.slice(1);
-    if(hash.startsWith("!")) {
-      hash = hash.slice(1);
-      return expandHashData(getHashData(atob(hash)));
-    }
-    // Split the hash string (like a query string) into a key-value object, using & and first = as separators
+
+  // Splits "a=1&b" like a query string, using & and the first = as separators.
+  function parseHashString(text) {
     const result = {};
-    if (hash) {
-      for (const part of hash.split("&")) {
-        const idx = part.indexOf("=");
-        if (idx !== -1) {
-          const key = decodeURIComponent(part.slice(0, idx));
-          const value = decodeURIComponent(part.slice(idx + 1));
-          result[key] = value;
-        } else {
-          result[decodeURIComponent(part)] = "";
-        }
+    if (!text) return result;
+    for (const part of text.split("&")) {
+      const idx = part.indexOf("=");
+      if (idx !== -1) {
+        result[decodeURIComponent(part.slice(0, idx))] = decodeURIComponent(part.slice(idx + 1));
+      } else {
+        result[decodeURIComponent(part)] = "";
       }
     }
     return result;
+  }
+
+  function getHashData() {
+    const hash = location.hash.slice(1);
+    try {
+      if (hash.startsWith("!")) return expandHashData(parseHashString(atob(hash.slice(1))));
+      return parseHashString(hash);
+    } catch {
+      return {};
+    }
   }
 
   function mount() {
@@ -1053,7 +1116,6 @@
     mounted = true;
     const hashData = getHashData();
     let serverId = hashData.server || storageGet(localStorage, "rtc-lib:server") || SERVERS[0].id;
-    if(serverId === "c") serverId = "custom";
     if (serverId !== "custom" && !SERVERS.some((server) => server.id === serverId)) serverId = SERVERS[0].id;
     let customKind = normalizeKind(storageGet(localStorage, "rtc-lib:custom-kind")) || "mqtt";
     let customUrl = storageGet(localStorage, "rtc-lib:custom-url");
@@ -1163,18 +1225,17 @@
       const data = getHashData();
       data.secret = currentSecret();
       data.server = draft.server;
-      const preferred = ["secret", "server"];
       if (draft.server === "custom") {
         data.kind = draft.customKind;
         data.url = draft.customUrl.trim();
-        preferred.push("kind", "url");
       } else {
         delete data.kind;
         delete data.url;
       }
       const minified = minifyHashData(data);
-      const keys = Object.keys(minified);
-      const hash = keys.map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(minified[key] ?? "")).join("&");
+      const hash = Object.keys(minified)
+        .map((key) => encodeURIComponent(key) + "=" + encodeURIComponent(minified[key]))
+        .join("&");
       return location.origin + location.pathname + location.search + "#!" + btoa(hash);
     }
 
@@ -1318,7 +1379,7 @@
       if (active) active.stop();
       paintTray();
       try {
-        const session = await connect({
+        await connect({
           server,
           name,
           secret,
@@ -1329,7 +1390,6 @@
             showForm(err.message);
           },
         });
-        active = session;
         storageSet(localStorage, "rtc-lib:handle", name);
         storageSet(localStorage, "rtc-lib:server", server.id);
         if (server.id === "custom") {
@@ -1343,10 +1403,6 @@
         paintTray();
         if (wasOpen) trayButton.focus();
       } catch (err) {
-        if (active) {
-          active.stop();
-          active = null;
-        }
         connecting = false;
         lastError = err.message || "Could not connect.";
         paintTray();
@@ -1720,7 +1776,6 @@
 
     const savedHandle = draft.name.trim();
     const hashServer = serverFromHash(hashData);
-    console.log("hashData:", hashData, hashServer);
     if (savedHandle && hashData.secret && hashServer) {
       draft.name = savedHandle;
       draft.secret = hashData.secret;
