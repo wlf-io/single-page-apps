@@ -23,6 +23,7 @@ h1,
 }
 
 .player {
+    position: relative;
     min-width: 0;
     min-height: 0;
     display: flex;
@@ -31,7 +32,8 @@ h1,
 .stage {
     position: relative;
     flex: 1;
-    min-height: 12rem;
+    min-width: 0;
+    min-height: 0;
     display: grid;
     place-items: center;
     background: #000;
@@ -41,8 +43,13 @@ h1,
 }
 
 .stage video {
+    display: block;
     width: 100%;
-    height: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 100%;
+    min-width: 0;
+    min-height: 0;
     object-fit: contain;
     background: #000;
 }
@@ -56,6 +63,101 @@ h1,
 
 .stage-empty[hidden] {
     display: none;
+}
+
+.stage-ui {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+}
+
+.stage-cover {
+    position: absolute;
+    inset: 0;
+    background: transparent;
+    pointer-events: auto;
+}
+
+.stage-controls {
+    position: absolute;
+    z-index: 1;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: 0.6rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.45rem 0.6rem;
+    background: color-mix(in srgb, var(--panel) 88%, transparent);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.player:hover .stage-controls,
+.player:focus-within .stage-controls {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.stage-play {
+    flex: none;
+    width: 2rem;
+    height: 2rem;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+}
+
+.stage-play::before {
+    content: "";
+    width: 0;
+    height: 0;
+    margin-left: 0.12rem;
+    border-style: solid;
+    border-width: 0.38rem 0 0.38rem 0.65rem;
+    border-color: transparent transparent transparent var(--text);
+}
+
+.stage-play:hover,
+.stage-play:focus-visible {
+    background: var(--accent-soft);
+    outline: none;
+}
+
+.stage-controls input[type="range"] {
+    accent-color: var(--accent);
+    min-width: 0;
+}
+
+.stage-timeline {
+    flex: 1;
+}
+
+.stage-volume-group {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.stage-speaker {
+    width: 1rem;
+    height: 1rem;
+    flex: none;
+    display: block;
+    background: url("/assets/speaker.svg") center / contain no-repeat;
+}
+
+.stage-volume {
+    flex: none;
+    width: 4.5rem;
 }
 
 .rail {

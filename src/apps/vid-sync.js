@@ -62,9 +62,7 @@ function createHtmlPlayer(mount, url) {
   let onPlay = null;
   let onPause = null;
   let onSetTime = null;
-  let scriptedPlay = 0;
-  let scriptedPause = 0;
-  let scriptedSeek = 0;
+  let onTimeUpdate = null;
 
   function asCallback(callback) {
     return typeof callback === "function" ? callback : null;
@@ -79,26 +77,17 @@ function createHtmlPlayer(mount, url) {
   media.addEventListener("emptied", syncEmpty);
   media.addEventListener("loadeddata", notifyLoaded);
   media.addEventListener("play", () => {
-    if (scriptedPlay > 0) {
-      scriptedPlay--;
-      return;
-    }
     onPlay?.();
   });
   media.addEventListener("pause", () => {
-    if (scriptedPause > 0) {
-      scriptedPause--;
-      return;
-    }
     if (media.ended) return;
     onPause?.();
   });
   media.addEventListener("seeked", () => {
-    if (scriptedSeek > 0) {
-      scriptedSeek--;
-      return;
-    }
     onSetTime?.(media.currentTime);
+  });
+  media.addEventListener("timeupdate", () => {
+    onTimeUpdate?.(media.currentTime);
   });
   if (url) media.src = url;
   mount.replaceChildren(media, empty);
@@ -135,34 +124,23 @@ function createHtmlPlayer(mount, url) {
     set onSetTime(callback) {
       onSetTime = asCallback(callback);
     },
+    // Called with the current time as playback advances
+    set ontimeupdate(callback) {
+      onTimeUpdate = asCallback(callback);
+    },
+    setVolume(volume) {
+      media.volume = volume;
+    },
     play() {
       if (media.playing) return;
-      scriptedPlay++;
-      const pending = media.play();
-      if (pending && typeof pending.catch === "function") {
-        pending.catch(() => {
-          scriptedPlay = Math.max(0, scriptedPlay - 1);
-        });
-      }
-      return pending;
+      return media.play();
     },
     pause() {
-      if (media.paused)  return;
-      scriptedPause++;
+      if (media.paused) return;
       media.pause();
     },
     setTime(time) {
-      let armed = false;
-      if (media.currentTime !== time) {
-        scriptedSeek++;
-        armed = true;
-      }
-      try {
-        media.currentTime = time;
-      } catch (error) {
-        if (armed) scriptedSeek = Math.max(0, scriptedSeek - 1);
-        throw error;
-      }
+      media.currentTime = time;
     },
     getTime() {
       return media.currentTime;
@@ -185,6 +163,9 @@ function queuedIdVideos() {
 function queuedVideos() {
   return queuedIdVideos().map(([id, item]) => item);
 }
+function hasQueuedVideos() {
+  return Object.entries(queue).length > 0;
+}
 
 function dedupeQueue() {
   const seen = new Set();
@@ -198,11 +179,62 @@ function dedupeQueue() {
 dedupeQueue();
 
 let player = null;
-setCurrentVideo(stage, videoState.video);
+setCurrentVideo(videoState.video);
 
 const queueList = document.getElementById("queue");
 const historyList = document.getElementById("history");
 const nowPlayingList = document.getElementById("now-playing");
+
+const stagePlay = document.querySelector("#stage-play");
+const stageTimeline = document.querySelector("#stage-timeline");
+const stageVolume = document.querySelector("#stage-volume");
+const stageCover = document.querySelector("#stage-cover");
+
+stagePlay.addEventListener("click", togglePlay);
+stageCover.addEventListener("click", togglePlay);
+
+let playSend = null;
+
+function togglePlay() {
+  if(!player) return;
+  if(!player.src) return;
+  videoState.playing = !videoState.playing;
+  if(player.ended) videoState.playing = true;
+  if(videoState.playing) {
+    videoState.time = unixtime() - (player.ended ? 0 : videoState.time);
+  } else {
+    videoState.time = player.getTime();
+  }
+  liveVideoUpdate();
+  clearTimeout(playSend);
+  playSend = setTimeout(() => sendState(null, videoState.playing ? "Video Paused" : "Video Played"), 250);
+}
+
+let timelineSend = null;
+
+stageTimeline.addEventListener("input", (event) => {
+  if(!player) return;
+  if(!player.src) return
+  const value = event.target.value / 100;
+  const progress = value * player.getLength();
+  const time = videoState.playing ? unixtime() - progress : progress;
+  videoState.time = time;
+  player.setTime(progress);
+  liveVideoUpdate();
+  clearTimeout(timelineSend);
+  timelineSend = setTimeout(() => sendState(null, "Video Time Set"), 1000);
+});
+
+stageVolume.addEventListener("input", (event) => {
+  const value = event.target.value;
+  localStorage.setItem("vid-sync-volume", value);
+  if(!player) return;
+  if(!player.src) return;
+  player.setVolume(value);
+});
+
+stageVolume.value = localStorage.getItem("vid-sync-volume") || 1;
+localStorage.setItem("vid-sync-volume", stageVolume.value);
 
 function unixtime() {  
   return Date.now() / 1000;
@@ -344,7 +376,7 @@ function loadHistory() {
 async function hashHistory() {
   const json = JSON.stringify(vidHistory);
   const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(json));
-  return bytesToHex(hash);
+  return new Uint8Array(hash).toHex();
 }
 
 async function mergeHistory(newHistory) {
@@ -427,25 +459,29 @@ function setCurrentVideo(video) {
           }
       },1000);
       console.log("video loaded");
+      player.setVolume(localStorage.getItem("vid-sync-volume") || 1);
     };
-    player.onPause = () => {
-      videoState.time = player.getTime();
-      videoState.playing = false;
-      sendState(null,"Video Paused");
+    // player.onPause = () => {
+    //   videoState.time = player.getTime();
+    //   videoState.playing = false;
+    //   sendState(null,"Video Paused");
+    // };
+    // player.onPlay = () => {
+    //   videoState.time =  unixtime() - player.getTime();
+    //   videoState.playing = true;
+    //   sendState(null,"Video Played");
+    // };
+    player.ontimeupdate = (time) => {
+      stageTimeline.value = (time / player.getLength()) * 100;
     };
-    player.onPlay = () => {
-      videoState.time =  unixtime() - player.getTime();
-      videoState.playing = true;
-      sendState(null,"Video Played");
-    };
-    player.onSetTime = (time) => {
-      if(videoState.playing) {
-          videoState.time =  unixtime() - time;
-      } else {
-          videoState.time = time;
-      }
-      sendState(null,"Video Time Set");
-    };
+    // player.onSetTime = (time) => {
+    //   if(videoState.playing) {
+    //       videoState.time =  unixtime() - time;
+    //   } else {
+    //       videoState.time = time;
+    //   }
+    //   sendState(null,"Video Time Set");
+    // };
   } else {
 
   }
@@ -464,13 +500,13 @@ function sendState(peer, reason) {
     debug();
 }
 
-function sendQueue(peer) {
+function sendQueue(peer, reason) {
     if(reason) console.log("Sending queue", reason);
     if(peer) Rtc.send(peer.id, "", "queue", queue);
     else Rtc.sendAll("","queue", queue);
 }
 
-function sendHistory(peer) {
+function sendHistory(peer, reason) {
     if(reason) console.log("Sending history", reason);
     if(peer) Rtc.send(peer.id, "", "history", vidHistory);
     else Rtc.sendAll("","history", vidHistory);
@@ -558,6 +594,7 @@ function liveVideoUpdate() {
 
 function takeNextQueuedVideo() {
   if(!player.ended) return false;
+  if(!hasQueuedVideos()) return false;
   const [id, next] = queuedIdVideos()[0];
   if(!next) return true;
   playListedVideo(id);
@@ -723,7 +760,10 @@ function addVideosToQueue(urls) {
     addVideoToQueue(url);
   }
   if(!videoState.video) {
+    console.log("Playing new video");
     playListedVideo(queuedIdVideos()[0][0]);
+  } else {
+    console.log("Video playing, not playing new video");
   }
   render();
   addForm.reset();

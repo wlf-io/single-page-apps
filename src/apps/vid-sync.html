@@ -16,6 +16,17 @@
   <div class="content">
     <section class="player" aria-label="Video player">
       <div class="stage" id="stage"></div>
+      <div class="stage-ui">
+        <div id="stage-cover" class="stage-cover"></div>
+        <div class="stage-controls">
+          <button type="button" id="stage-play" class="stage-play" aria-label="Play"></button>
+          <input class="stage-timeline" id="stage-timeline" type="range" min="0" max="100" value="0" aria-label="Timeline" />
+          <span class="stage-volume-group">
+            <span class="stage-speaker" aria-hidden="true"></span>
+            <input class="stage-volume" id="stage-volume" type="range" min="0" max="1" step="0.05" value="1" aria-label="Volume" />
+          </span>
+        </div>
+      </div>
     </section>
 
     <aside class="rail" aria-label="Playback and lists">
