@@ -193,8 +193,14 @@ function writeOutput(itemPath, content) {
     console.log(`Outputted ${itemPath} to ${outputPath}`);
 }
 
+function prepareHtml(html, assets) {
+    html = replaceAssets(html, assets);
+    html = html.replace('<!--link rel="manifest" href="/manifest.webmanifest" /-->', '<link rel="manifest" href="/manifest.webmanifest" />');
+    return html;
+}
+
 for (const htmlPath of Object.keys(assets["html"])) {
-    writeOutput(htmlPath, replaceAssets(assets["html"][htmlPath], assets));
+    writeOutput(htmlPath, prepareHtml(assets["html"][htmlPath], assets));
 }
 
 writeOutput(MANIFEST_PATH, replaceAssets(manifest, assets));

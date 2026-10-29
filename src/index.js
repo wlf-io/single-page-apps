@@ -1,12 +1,25 @@
 const apps = JSON.parse(document.getElementById("apps-data").textContent);
 
+function isIpAddress(host) {
+    if (/^(?:\d{1,3}\.){3}\d{1,3}$/.test(host)) {
+        return host.split(".").every((part) => Number(part) <= 255);
+    }
+    const bare = host.startsWith("[") && host.endsWith("]") ? host.slice(1, -1) : host;
+    if (!bare.includes(":")) return false;
+    try {
+        new URL(`http://[${bare}]/`);
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 function hostedLocally() {
     const host = location.hostname;
     return location.protocol === "file:"
         || host === "localhost"
-        || host === "127.0.0.1"
-        || host === "[::1]"
-        || host.endsWith(".localhost");
+        || host.endsWith(".localhost")
+        || isIpAddress(host);
 }
 
 function isListed(app) {
@@ -159,10 +172,12 @@ restoreFromHash();
 
 if ("serviceWorker" in navigator) {
     if (hostedLocally()) {
+        console.log("Unregistering service worker");
         navigator.serviceWorker.getRegistrations()
             .then((registrations) => registrations.forEach((registration) => registration.unregister()))
             .catch(() => {});
     } else {
+        console.log("Registering service worker");
         navigator.serviceWorker.register("/sw.js").catch(() => {});
     }
 }

@@ -12,6 +12,21 @@
   <h1>Breaker<span>A breakout game</span></h1>
 
   <div class="content">
+    <div class="hud">
+      <p class="stat">Score <strong id="score">0</strong></p>
+      <div class="status">
+        <p class="stat level">Level <strong id="level">1</strong></p>
+        <div id="lives" class="lives" role="img" aria-label="3 lives">
+          <span class="life"></span>
+          <span class="life"></span>
+          <span class="life"></span>
+        </div>
+      </div>
+      <button type="button" class="restart" id="restart">Restart</button>
+    </div>
+    <div class="stage">
+      <canvas id="board" aria-label="Breakout board. Move the pointer to slide the paddle, then click or tap to launch the ball."></canvas>
+    </div>
   </div>
 
   <nav class="links">
