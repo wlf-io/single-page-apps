@@ -159,6 +159,216 @@ function createHtmlPlayer(mount, url) {
   };
 }
 
+function isYoutubeUrl(url) {
+  try {
+    const host = new URL(url).hostname.replace(/^www\./, "");
+    return host === "youtu.be" || host === "youtube.com" || host.endsWith(".youtube.com");
+  } catch {
+    return false;
+  }
+}
+
+function youtubeVideoId(url) {
+  if (!isYoutubeUrl(url)) return null;
+  const parsed = new URL(url);
+  const parts = parsed.pathname.split("/").filter(Boolean);
+  let id = null;
+  if (parsed.hostname.replace(/^www\./, "") === "youtu.be") id = parts[0];
+  else if (parts[0] === "watch") id = parsed.searchParams.get("v");
+  else if (["embed", "shorts", "live", "v"].includes(parts[0])) id = parts[1];
+  return id && /^[\w-]{11}$/.test(id) ? id : null;
+}
+
+let youtubeApi = null;
+
+function loadYoutubeApi() {
+  youtubeApi ??= new Promise((resolve, reject) => {
+    if (globalThis.YT?.Player) return resolve(globalThis.YT);
+    const previous = globalThis.onYouTubeIframeAPIReady;
+    globalThis.onYouTubeIframeAPIReady = () => {
+      previous?.();
+      resolve(globalThis.YT);
+    };
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.addEventListener("error", () => {
+      script.remove();
+      youtubeApi = null;
+      reject(new Error("Could not load the YouTube IFrame API"));
+    });
+    document.head.append(script);
+  });
+  return youtubeApi;
+}
+
+// Values of YT.PlayerState, usable before the API has loaded
+const YT_ENDED = 0;
+const YT_PLAYING = 1;
+const YT_PAUSED = 2;
+const YT_BUFFERING = 3;
+
+function createYoutubePlayer(mount, url) {
+  const videoId = youtubeVideoId(url);
+
+  const wrapper = document.createElement("div");
+  wrapper.className = "stage-embed";
+  wrapper.hidden = !videoId;
+  const target = document.createElement("div");
+  wrapper.append(target);
+
+  const empty = document.createElement("p");
+  empty.className = "stage-empty";
+  empty.textContent = "No video";
+  empty.hidden = Boolean(videoId);
+
+  function showMessage(message) {
+    empty.textContent = message;
+    empty.hidden = false;
+  }
+
+  mount.replaceChildren(wrapper, empty);
+
+  let yt = null;
+  let ready = false;
+  let state = -1;
+  let volume = null;
+  let lastTime = 0;
+  let lastPoll = 0;
+  let poll = null;
+  let onLoaded = null;
+  let onPlay = null;
+  let onPause = null;
+  let onSeek = null;
+  let onTimeUpdate = null;
+
+  function asCallback(callback) {
+    return typeof callback === "function" ? callback : null;
+  }
+
+  function isPlaying() {
+    return state === YT_PLAYING || state === YT_BUFFERING;
+  }
+
+  // The API has no timeupdate or seeked events, so poll for them
+  function pollTime() {
+    if (!wrapper.isConnected) {
+      clearInterval(poll);
+      yt?.destroy();
+      return;
+    }
+    if (!ready) return;
+    const now = performance.now();
+    const time = yt.getCurrentTime();
+    const expected = lastTime + (state === YT_PLAYING ? (now - lastPoll) / 1000 : 0);
+    if (Math.abs(time - expected) > 1) onSeek?.(time);
+    if (time !== lastTime) onTimeUpdate?.(time);
+    lastTime = time;
+    lastPoll = now;
+  }
+
+  if (videoId) {
+    poll = setInterval(pollTime, 250);
+    loadYoutubeApi()
+      .then((YT) => {
+        if (!wrapper.isConnected) return;
+        yt = new YT.Player(target, {
+          videoId,
+          width: "100%",
+          height: "100%",
+          playerVars: {
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            rel: 0,
+            iv_load_policy: 3,
+            playsinline: 1,
+            origin: location.origin,
+          },
+          events: {
+            onReady: () => {
+              ready = true;
+              if (volume !== null) yt.setVolume(volume);
+              lastTime = yt.getCurrentTime();
+              lastPoll = performance.now();
+              onLoaded?.();
+            },
+            onStateChange: (event) => {
+              state = event.data;
+              if (state === YT_PLAYING) onPlay?.();
+              if (state === YT_PAUSED) onPause?.();
+            },
+            onError: () => showMessage("Video unavailable"),
+          },
+        });
+      })
+      .catch((error) => {
+        console.warn(error);
+        wrapper.hidden = true;
+        showMessage("Could not load YouTube");
+      });
+  }
+
+  return {
+    // True if there is a video and it has ended
+    get ended() {
+      return Boolean(videoId) && state === YT_ENDED;
+    },
+    get isPlaying() {
+      return isPlaying();
+    },
+    get isPaused() {
+      return !isPlaying();
+    },
+    get src() {
+      return videoId ? url : "";
+    },
+    // Called when the player is ready to play
+    set onLoaded(callback) {
+      onLoaded = asCallback(callback);
+      if (ready && onLoaded) queueMicrotask(() => onLoaded?.());
+    },
+    // Called when playback starts
+    set onPlay(callback) {
+      onPlay = asCallback(callback);
+    },
+    // Called when playback pauses, but not when the video ends
+    set onPause(callback) {
+      onPause = asCallback(callback);
+    },
+    // Called with the new time after a seek
+    set onSeek(callback) {
+      onSeek = asCallback(callback);
+    },
+    // Called with the current time as playback advances
+    set onTimeUpdate(callback) {
+      onTimeUpdate = asCallback(callback);
+    },
+    setVolume(value) {
+      volume = Math.round(value * 100);
+      if (ready) yt.setVolume(volume);
+    },
+    play() {
+      if (!ready || isPlaying()) return;
+      yt.playVideo();
+    },
+    pause() {
+      if (!ready || !isPlaying()) return;
+      yt.pauseVideo();
+    },
+    setTime(time) {
+      if (!ready) return;
+      yt.seekTo(time, true);
+    },
+    getTime() {
+      return ready ? yt.getCurrentTime() : 0;
+    },
+    getLength() {
+      const length = ready ? yt.getDuration() : 0;
+      return length > 0 ? length : NaN;
+    },
+  };
+}
+
 function unixtime() {
   return Date.now() / 1000;
 }
@@ -310,6 +520,18 @@ function loadHistory() {
 }
 
 // Playback
+function getPlayerFactoryForUrl(url) {
+  return isYoutubeUrl(url) ? createYoutubePlayer : createHtmlPlayer;
+}
+
+function createPlayer(url) {
+  const playerFactory = getPlayerFactoryForUrl(url);
+  const current = playerFactory(stage, url);
+  current.setVolume(storedVolume());
+  stageTimeline.value = 0;
+  stageLength.textContent = "00:00";
+  return current;
+}
 
 function setCurrentVideo(video) {
   videoState.video = video;
@@ -320,11 +542,8 @@ function setCurrentVideo(video) {
     return;
   }
   currentUrl = url;
-  const current = createHtmlPlayer(stage, url);
+  const current = createPlayer(url);
   player = current;
-  current.setVolume(storedVolume());
-  stageTimeline.value = 0;
-  stageLength.textContent = "00:00";
   current.onLoaded = () => {
     if (player !== current) return;
     stageLength.textContent = formatClock(current.getLength());
