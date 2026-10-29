@@ -179,3 +179,13 @@ topbarDownload.addEventListener("click", async () => {
     a.click();
     URL.revokeObjectURL(url);
 });
+
+if ("serviceWorker" in navigator) {
+    if (hostedLocally()) {
+        navigator.serviceWorker.getRegistrations()
+            .then((registrations) => registrations.forEach((registration) => registration.unregister()))
+            .catch(() => {});
+    } else {
+        navigator.serviceWorker.register("/sw.js").catch(() => {});
+    }
+}

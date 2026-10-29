@@ -7,6 +7,12 @@ with no external dependencies so they can be easily hosted anywhere
 
 ---------
 
+# Build
+
+```sh
+node build.js
+```
+
 # Dev
 
 ### HTTP
