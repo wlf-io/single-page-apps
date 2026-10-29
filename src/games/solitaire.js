@@ -1,10 +1,5 @@
 const version = "0.0.3";
 
-if (window.self !== window.top) {
-    const title = document.querySelector("h1");
-    if (title) title.hidden = true;
-}
-
 let dif = 14.42;
 const columns = [];
 for (let i = 0; i < 7; i++) {

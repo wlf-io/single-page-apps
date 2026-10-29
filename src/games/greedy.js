@@ -186,11 +186,6 @@ function renderPoints(elem, points) {
   }
 }
 
-if (window.self !== window.top) {
-  const title = document.querySelector("h1");
-  if (title) title.hidden = true;
-}
-
 function getDiceAtState(state) {
   const dice = [];
   for (let i = 0; i < 6; i++) {

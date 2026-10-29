@@ -14,8 +14,8 @@ body {
   min-height: 100vh;
   font-family: "Segoe UI", system-ui, sans-serif;
   background:
-    radial-gradient(ellipse 80% 60% at 20% 10%, #1a2a3a 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 90% 80%, #1a2830 0%, transparent 45%),
+    radial-gradient(ellipse 80% 60% at 20% 10%, #1a2a3a 0%, transparent 50%) no-repeat,
+    radial-gradient(ellipse 60% 50% at 90% 80%, #1a2830 0%, transparent 45%) no-repeat,
     var(--bg);
   color: var(--text);
   display: flex;
