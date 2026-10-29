@@ -82,26 +82,17 @@ const frame = document.querySelector(".app-frame");
 const topbarApp = document.querySelector(".topbar-app");
 const topbarAppName = document.querySelector(".topbar-app-name");
 const topbarAppBlurb = document.querySelector(".topbar-app-blurb");
-const topbarActions = document.querySelector(".topbar-actions");
-const topbarOpen = document.querySelector(".topbar-open");
-const topbarDownload = document.querySelector(".topbar-download");
 
 function setTopbarApp(app) {
     if (!app) {
         topbarApp.hidden = true;
-        topbarActions.hidden = true;
-        topbarOpen.removeAttribute("href");
         topbarAppName.textContent = "";
         topbarAppBlurb.textContent = "";
-        document.body.classList.remove("app-open");
         return;
     }
     topbarAppName.textContent = app.name;
     topbarAppBlurb.textContent = app.blurb;
-    topbarOpen.href = app.href;
     topbarApp.hidden = false;
-    topbarActions.hidden = false;
-    document.body.classList.add("app-open");
 }
 
 function hashId() {
@@ -165,20 +156,6 @@ document.querySelector(".sidebar-home").addEventListener("click", (e) => {
 
 window.addEventListener("hashchange", restoreFromHash);
 restoreFromHash();
-
-topbarDownload.addEventListener("click", async () => {
-    const app = appById(hashId()) || appById(frame.dataset.appId);
-    if (!app) return;
-    const res = await fetch(app.href);
-    if (!res.ok) return;
-    const blob = new Blob([await res.text()], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = app.href.split("/").pop() || `${app.id}.html`;
-    a.click();
-    URL.revokeObjectURL(url);
-});
 
 if ("serviceWorker" in navigator) {
     if (hostedLocally()) {
