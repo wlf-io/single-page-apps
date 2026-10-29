@@ -104,6 +104,61 @@
   display: none;
 }
 
+.rtc-details-toggle {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  width: 100%;
+  margin-top: 0.85rem;
+  padding: 0.45rem 0.1rem;
+  color: var(--rtc-muted);
+  text-align: left;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--rtc-border);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.rtc-details-toggle:hover,
+.rtc-details-toggle:focus-visible {
+  color: var(--rtc-text);
+  outline: none;
+}
+
+.rtc-details-toggle:focus-visible {
+  border-bottom-color: var(--rtc-accent);
+}
+
+.rtc-details-toggle small {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--rtc-muted);
+  font-size: 0.75rem;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rtc-details-chevron {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: translateY(-0.1rem) rotate(45deg);
+  flex-shrink: 0;
+}
+
+.rtc-details-toggle[aria-expanded="true"] .rtc-details-chevron {
+  transform: translateY(0.1rem) rotate(225deg);
+}
+
+.rtc-details[hidden] {
+  display: none;
+}
+
 .rtc-field input {
   width: 100%;
   padding: 0.5rem 0.65rem;

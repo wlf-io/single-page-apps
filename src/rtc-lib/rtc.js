@@ -1056,16 +1056,6 @@
     }
   }
 
-  function serverFromHash(data) {
-    const known = SERVERS.find((server) => server.id === data.server);
-    if (known) return known;
-    if (data.server !== "custom") return null;
-    const kind = normalizeKind(data.kind);
-    const url = parseServerUrl(data.url);
-    if (!kind || !url) return null;
-    return { id: "custom", name: url, kind, url };
-  }
-
   function minifyHashData(data) {
     const result = {};
     if (data.server) result.s = data.server === "custom" ? "c" : data.server;
@@ -1126,12 +1116,13 @@
     }
     const draft = {
       name: storageGet(localStorage, "rtc-lib:handle"),
-      secret: hashData.secret || "",
+      secret: hashData.secret || bytesToHex(randomBytes(MIN_SECRET_LENGTH / 2)),
       server: serverId,
       customKind,
       customUrl,
     };
 
+    let detailsOpen = false;
     let summary = null;
     let peers = null;
     let pickerAbort = null;
@@ -1412,6 +1403,7 @@
 
     function showForm(errorText) {
       lastError = errorText || "";
+      if (errorText) detailsOpen = true;
       destroyDialog();
       pickerAbort = new AbortController();
       const title = document.createElement("h2");
@@ -1459,6 +1451,26 @@
         draft.secret = secretInput.value;
       });
       secretField.append(secretInput);
+
+      const details = document.createElement("div");
+      details.id = "rtc-details";
+      details.className = "rtc-details";
+      const detailsToggle = document.createElement("button");
+      detailsToggle.type = "button";
+      detailsToggle.className = "rtc-details-toggle";
+      detailsToggle.setAttribute("aria-controls", "rtc-details");
+      const detailsLabel = document.createElement("span");
+      detailsLabel.textContent = "Connection details";
+      const detailsSummary = document.createElement("small");
+      const detailsChevron = document.createElement("span");
+      detailsChevron.className = "rtc-details-chevron";
+      detailsChevron.setAttribute("aria-hidden", "true");
+      detailsToggle.append(detailsLabel, detailsSummary, detailsChevron);
+      detailsToggle.addEventListener("click", () => setDetailsOpen(!detailsOpen));
+      function paintDetailsSummary() {
+        const server = SERVERS.find((item) => item.id === draft.server);
+        detailsSummary.textContent = server ? server.name : draft.customUrl.trim() || "Custom server";
+      }
 
       function mountPicker({ labelText, labelId, menuId, currentId, getId, setId, getChoices }) {
         const field = document.createElement("div");
@@ -1639,6 +1651,7 @@
         draft.customUrl = urlInput.value;
         storageSet(localStorage, "rtc-lib:custom-url", urlInput.value);
         serverPicker.paint();
+        paintDetailsSummary();
       });
       urlField.append(urlInput);
       function paintCustom() {
@@ -1647,6 +1660,7 @@
         urlField.hidden = !custom;
         if (!custom) typePicker.setOpen(false);
         serverPicker.paint();
+        paintDetailsSummary();
       }
       paintCustom();
       document.addEventListener("keydown", (event) => {
@@ -1658,6 +1672,17 @@
       const stun = document.createElement("p");
       stun.className = "rtc-stun";
       stun.textContent = "Peer connections use public STUN: " + STUN.join(", ") + ".";
+
+      details.append(secretField, serverPicker.field, typePicker.field, urlField, stun);
+      function setDetailsOpen(next) {
+        detailsOpen = next;
+        details.hidden = !next;
+        detailsToggle.setAttribute("aria-expanded", String(next));
+        if (next) return;
+        serverPicker.setOpen(false);
+        typePicker.setOpen(false);
+      }
+      setDetailsOpen(detailsOpen);
 
       const error = document.createElement("p");
       error.className = "rtc-error";
@@ -1689,7 +1714,7 @@
 
       const scroll = document.createElement("div");
       scroll.className = "rtc-scroll";
-      scroll.append(title, lead, nameField, secretField, serverPicker.field, typePicker.field, urlField, stun, error);
+      scroll.append(title, lead, nameField, detailsToggle, details, error);
       if (active) {
         summary = document.createElement("span");
         summary.className = "rtc-summary";
@@ -1707,6 +1732,7 @@
       }, { signal: pickerAbort.signal });
       const form = document.createElement("form");
       form.autocomplete = "off";
+      form.noValidate = true;
       form.append(scroll, actions);
       form.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -1723,12 +1749,14 @@
         if (lengthError) {
           error.hidden = false;
           error.textContent = lengthError;
+          setDetailsOpen(true);
           secretInput.focus();
           return;
         }
         if (draft.server === "custom" && !chosenServer()) {
           error.hidden = false;
           error.textContent = "Enter a websocket URL, starting with wss:// or ws://.";
+          setDetailsOpen(true);
           urlInput.focus();
           return;
         }
@@ -1774,19 +1802,6 @@
       setPeersOpen(peerPanel.hidden);
     });
 
-    const savedHandle = draft.name.trim();
-    const hashServer = serverFromHash(hashData);
-    if (savedHandle && hashData.secret && hashServer) {
-      draft.name = savedHandle;
-      draft.secret = hashData.secret;
-      draft.server = hashServer.id;
-      if (hashServer.id === "custom") {
-        draft.customKind = hashServer.kind;
-        draft.customUrl = hashServer.url;
-      }
-      startConnect();
-    } else {
-      showForm("");
-    }
+    showForm("");
   }
 })();

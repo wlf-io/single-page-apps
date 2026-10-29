@@ -1,7 +1,7 @@
 Rtc.init("vid-sync");
 
 /*
- 
+
  // video item object format
 
 {
@@ -13,35 +13,45 @@ Rtc.init("vid-sync");
 
 */
 
-
 const tabs = [...document.querySelectorAll('[role="tab"]')];
 const stage = document.getElementById("stage");
+const stagePlay = document.getElementById("stage-play");
+const stageTimeline = document.getElementById("stage-timeline");
+const stageVolume = document.getElementById("stage-volume");
+const stageCover = document.getElementById("stage-cover");
+const stageLength = document.getElementById("stage-length");
+const stageTime = document.getElementById("stage-time");
+const queueList = document.getElementById("queue");
+const historyList = document.getElementById("history");
+const nowPlayingList = document.getElementById("now-playing");
+const addButton = document.getElementById("queue-add");
+const addDialog = document.getElementById("queue-add-dialog");
+const addForm = document.getElementById("queue-add-form");
+const urlInput = document.getElementById("queue-url");
+const urlError = document.getElementById("queue-url-error");
+
 const launch = Date.now();
-let playTimer = null;
-
-Rtc.onSessionOpen(() => {
-  playTimer = setInterval(tick, 5000);
-  loadHistory();
-});
-
-Rtc.onSessionClose(() => {
-  clearInterval(playTimer);
-  playTimer = null;
-});
+// Launch times of connected peers, keyed by peer id
+const peerLaunches = {};
 
 // Video items for the current queue, keyed by video id
 const queue = {};
-// An array of video items for past videos
-const vidHistory = JSON.parse(localStorage.getItem("vid-sync-history") || "[]") || [];
-// The current video item being played
+// Video items for past videos, newest first
+const vidHistory = [];
+// Shared playback state. While playing, time is the unix time at which
+// position 0 would have occurred. While paused, it is the position in the video.
 const videoState = {
-    playing: false,
-    time: 0,
-    video: null,
+  playing: false,
+  time: 0,
+  video: null,
 };
 
-
-
+let player = null;
+let currentUrl = null;
+let playTimer = null;
+let playSend = null;
+let timelineSend = null;
+let dragIndex = null;
 
 function createHtmlPlayer(mount, url) {
   const media = document.createElement("video");
@@ -58,24 +68,22 @@ function createHtmlPlayer(mount, url) {
   }
 
   let loaded = false;
-  let onloaded = null;
+  let onLoaded = null;
   let onPlay = null;
   let onPause = null;
-  let onSetTime = null;
+  let onSeek = null;
   let onTimeUpdate = null;
 
   function asCallback(callback) {
     return typeof callback === "function" ? callback : null;
   }
 
-  function notifyLoaded() {
-    loaded = true;
-    onloaded?.();
-  }
-
   media.addEventListener("loadstart", syncEmpty);
   media.addEventListener("emptied", syncEmpty);
-  media.addEventListener("loadeddata", notifyLoaded);
+  media.addEventListener("loadeddata", () => {
+    loaded = true;
+    onLoaded?.();
+  });
   media.addEventListener("play", () => {
     onPlay?.();
   });
@@ -84,7 +92,7 @@ function createHtmlPlayer(mount, url) {
     onPause?.();
   });
   media.addEventListener("seeked", () => {
-    onSetTime?.(media.currentTime);
+    onSeek?.(media.currentTime);
   });
   media.addEventListener("timeupdate", () => {
     onTimeUpdate?.(media.currentTime);
@@ -94,9 +102,9 @@ function createHtmlPlayer(mount, url) {
   syncEmpty();
 
   return {
-    // Returns true if there is a video and it has ended
+    // True if there is a video and it has ended
     get ended() {
-      return media.src && media.ended;
+      return Boolean(media.src) && media.ended;
     },
     get isPlaying() {
       return !media.paused;
@@ -108,32 +116,32 @@ function createHtmlPlayer(mount, url) {
       return media.currentSrc || media.src;
     },
     // Called when the video has loaded enough to play
-    set onloaded(callback) {
-      onloaded = asCallback(callback);
-      if (loaded && onloaded) queueMicrotask(() => onloaded?.());
+    set onLoaded(callback) {
+      onLoaded = asCallback(callback);
+      if (loaded && onLoaded) queueMicrotask(() => onLoaded?.());
     },
-    // Called when the user starts playback
+    // Called when playback starts
     set onPlay(callback) {
       onPlay = asCallback(callback);
     },
-    // Called when the user pauses playback
+    // Called when playback pauses, but not when the video ends
     set onPause(callback) {
       onPause = asCallback(callback);
     },
-    // Called with the new time when the user seeks
-    set onSetTime(callback) {
-      onSetTime = asCallback(callback);
+    // Called with the new time after a seek
+    set onSeek(callback) {
+      onSeek = asCallback(callback);
     },
     // Called with the current time as playback advances
-    set ontimeupdate(callback) {
+    set onTimeUpdate(callback) {
       onTimeUpdate = asCallback(callback);
     },
     setVolume(volume) {
       media.volume = volume;
     },
     play() {
-      if (media.playing) return;
-      return media.play();
+      if (!media.paused) return;
+      return media.play().catch((error) => console.warn("Playback failed:", error));
     },
     pause() {
       if (media.paused) return;
@@ -151,6 +159,25 @@ function createHtmlPlayer(mount, url) {
   };
 }
 
+function unixtime() {
+  return Date.now() / 1000;
+}
+
+function formatClock(seconds) {
+  if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
+  const total = Math.floor(seconds);
+  const minutes = Math.floor(total / 60);
+  const secs = String(total % 60).padStart(2, "0");
+  return `${String(minutes).padStart(2, "0")}:${secs}`;
+}
+
+function storedVolume() {
+  const volume = Number(localStorage.getItem("vid-sync-volume") ?? 1);
+  return Number.isFinite(volume) ? Math.min(Math.max(volume, 0), 1) : 1;
+}
+
+// Queue
+
 function asQueue(value) {
   if (value && typeof value === "object" && !Array.isArray(value)) return value;
   return {};
@@ -160,85 +187,238 @@ function asQueue(value) {
 function queuedIdVideos() {
   return Object.entries(queue).sort((a, b) => a[1].index - b[1].index);
 }
+
 function queuedVideos() {
-  return queuedIdVideos().map(([id, item]) => item);
-}
-function hasQueuedVideos() {
-  return Object.entries(queue).length > 0;
+  return queuedIdVideos().map(([, item]) => item);
 }
 
-function dedupeQueue() {
-  const seen = new Set();
-  for (const [id, item] of Object.entries(queue)) {
+function hasQueuedVideos() {
+  return Object.keys(queue).length > 0;
+}
+
+function renumberQueue() {
+  const items = queuedVideos();
+  for (let i = 0; i < items.length; i++) items[i].index = i + 1;
+}
+
+function replaceQueue(newQueue) {
+  for (const id of Object.keys(queue)) {
+    if (!newQueue[id]) delete queue[id];
+  }
+  Object.assign(queue, newQueue);
+}
+
+function newID() {
+  let id = crypto.randomUUID().slice(0, 8);
+  while (queue[id]) id = crypto.randomUUID().slice(0, 8);
+  return id;
+}
+
+function addVideoToQueue(url) {
+  const items = queuedVideos();
+  const last = items[items.length - 1];
+  const index = last ? last.index + 1 : 1;
+  queue[newID()] = { index, url, thumb: "", time: unixtime() };
+}
+
+function addVideosToQueue(urls) {
+  for (const url of urls) addVideoToQueue(url);
+  if (!videoState.video) {
+    playListedVideo(queuedIdVideos()[0][0]);
+  } else {
+    render();
+    sendQueue(null, "Videos added");
+  }
+  addForm.reset();
+  addDialog.close();
+  queueList.lastElementChild?.scrollIntoView({ block: "nearest" });
+}
+
+function playListedVideo(id) {
+  const video = queue[id];
+  if (!video) return;
+  delete queue[id];
+  renumberQueue();
+  video.time = unixtime();
+  videoState.playing = true;
+  videoState.time = unixtime();
+  vidHistory.unshift({ ...video });
+  saveHistory();
+  setCurrentVideo(video);
+  render();
+  sendAll(null, "Playing new video");
+}
+
+function removeFromQueue(id) {
+  if (!queue[id]) return;
+  delete queue[id];
+  renumberQueue();
+  render();
+  sendQueue(null, "Video removed");
+}
+
+function reorderQueue(from, to) {
+  if (to > from) to -= 1;
+  if (from === to) return;
+  const items = queuedVideos();
+  const [item] = items.splice(from, 1);
+  items.splice(to, 0, item);
+  for (let i = 0; i < items.length; i++) items[i].index = i + 1;
+  render();
+  sendQueue(null, "Queue reordered");
+}
+
+// History
+
+function historyKey(item) {
+  return `${item.url}|${item.time}`;
+}
+
+// Adds unseen items to the history, returns true if anything was added
+function mergeHistory(items) {
+  const seen = new Set(vidHistory.map(historyKey));
+  let added = false;
+  for (const item of items) {
     if (!item?.url) continue;
-    if (seen.has(item.url)) delete queue[id];
-    else seen.add(item.url);
+    const key = historyKey(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    vidHistory.push(item);
+    added = true;
+  }
+  if (added) vidHistory.sort((a, b) => b.time - a.time);
+  return added;
+}
+
+function saveHistory() {
+  Rtc.getHash()
+    .then((hash) => localStorage.setItem(`vid-sync-history-${hash}`, JSON.stringify(vidHistory)))
+    .catch((error) => console.warn("Could not save history:", error));
+}
+
+function loadHistory() {
+  Rtc.getHash()
+    .then((hash) => {
+      const stored = JSON.parse(localStorage.getItem(`vid-sync-history-${hash}`) || "[]");
+      if (Array.isArray(stored) && mergeHistory(stored)) {
+        render();
+        sendHistory(null, "History loaded");
+      }
+      saveHistory();
+    })
+    .catch((error) => console.warn("Could not load history:", error));
+}
+
+// Playback
+
+function setCurrentVideo(video) {
+  videoState.video = video;
+  renderNowPlaying();
+  const url = video?.url ?? null;
+  if (player && url === currentUrl) {
+    liveVideoUpdate();
+    return;
+  }
+  currentUrl = url;
+  const current = createHtmlPlayer(stage, url);
+  player = current;
+  current.setVolume(storedVolume());
+  stageTimeline.value = 0;
+  stageLength.textContent = "00:00";
+  current.onLoaded = () => {
+    if (player !== current) return;
+    stageLength.textContent = formatClock(current.getLength());
+    liveVideoUpdate();
+  };
+  current.onTimeUpdate = (time) => {
+    if (player !== current) return;
+    const length = current.getLength();
+    if (!Number.isFinite(length) || length <= 0) return;
+    stageLength.textContent = formatClock(length);
+    stageTime.textContent = formatClock(time);
+    stageTimeline.value = (time / length) * 100;
+  };
+}
+
+function liveVideoUpdate() {
+  if (!player?.src) return;
+  if (videoState.playing) {
+    const target = unixtime() - videoState.time;
+    const length = player.getLength();
+    if (Number.isFinite(length) && target >= length) return;
+    if (Math.abs(target - player.getTime()) > 5) player.setTime(Math.max(0, target));
+    player.play();
+  } else {
+    player.pause();
+    if (Math.abs(videoState.time - player.getTime()) > 0.25) player.setTime(videoState.time);
   }
 }
 
-dedupeQueue();
+function togglePlay() {
+  if (!player?.src) return;
+  if (player.ended) {
+    videoState.playing = true;
+    videoState.time = unixtime();
+  } else if (videoState.playing) {
+    videoState.playing = false;
+    videoState.time = player.getTime();
+  } else {
+    videoState.playing = true;
+    videoState.time = unixtime() - videoState.time;
+  }
+  liveVideoUpdate();
+  clearTimeout(playSend);
+  playSend = setTimeout(() => sendState(null, videoState.playing ? "Video played" : "Video paused"), 250);
+}
 
-let player = null;
-setCurrentVideo(videoState.video);
+function isOldestPeer() {
+  return Object.values(peerLaunches).every((peerLaunch) => peerLaunch >= launch);
+}
 
-const queueList = document.getElementById("queue");
-const historyList = document.getElementById("history");
-const nowPlayingList = document.getElementById("now-playing");
+// Only the oldest client advances the queue, unless it has clearly failed to
+function takeNextQueuedVideo() {
+  if (!player?.ended || !hasQueuedVideos()) return false;
+  const overdue = videoState.playing && unixtime() - videoState.time > player.getLength() + 15;
+  if (!isOldestPeer() && !overdue) return false;
+  playListedVideo(queuedIdVideos()[0][0]);
+  return true;
+}
 
-const stagePlay = document.querySelector("#stage-play");
-const stageTimeline = document.querySelector("#stage-timeline");
-const stageVolume = document.querySelector("#stage-volume");
-const stageCover = document.querySelector("#stage-cover");
+function tick() {
+  if (takeNextQueuedVideo()) return;
+  liveVideoUpdate();
+}
 
 stagePlay.addEventListener("click", togglePlay);
 stageCover.addEventListener("click", togglePlay);
 
-let playSend = null;
-
-function togglePlay() {
-  if(!player) return;
-  if(!player.src) return;
-  videoState.playing = !videoState.playing;
-  if(player.ended) videoState.playing = true;
-  if(videoState.playing) {
-    videoState.time = unixtime() - (player.ended ? 0 : videoState.time);
+stageTimeline.addEventListener("input", () => {
+  if (!player?.src) return;
+  const length = player.getLength();
+  if (!Number.isFinite(length)) return;
+  const position = (stageTimeline.value / 100) * length;
+  videoState.time = videoState.playing ? unixtime() - position : position;
+  player.setTime(position);
+  liveVideoUpdate();
+  let send = false;
+  if(!timelineSend) {
+    sendState(null, "Video time set");
   } else {
-    videoState.time = player.getTime();
+    send = true;
   }
-  liveVideoUpdate();
-  clearTimeout(playSend);
-  playSend = setTimeout(() => sendState(null, videoState.playing ? "Video Paused" : "Video Played"), 250);
-}
-
-let timelineSend = null;
-
-stageTimeline.addEventListener("input", (event) => {
-  if(!player) return;
-  if(!player.src) return
-  const value = event.target.value / 100;
-  const progress = value * player.getLength();
-  const time = videoState.playing ? unixtime() - progress : progress;
-  videoState.time = time;
-  player.setTime(progress);
-  liveVideoUpdate();
   clearTimeout(timelineSend);
-  timelineSend = setTimeout(() => sendState(null, "Video Time Set"), 1000);
+  timelineSend = setTimeout(() => {
+    if(send) sendState(null, "Video time set");
+    timelineSend = null;
+  }, 1000);
 });
 
-stageVolume.addEventListener("input", (event) => {
-  const value = event.target.value;
-  localStorage.setItem("vid-sync-volume", value);
-  if(!player) return;
-  if(!player.src) return;
-  player.setVolume(value);
+stageVolume.addEventListener("input", () => {
+  localStorage.setItem("vid-sync-volume", stageVolume.value);
+  player?.setVolume(storedVolume());
 });
 
-stageVolume.value = localStorage.getItem("vid-sync-volume") || 1;
-localStorage.setItem("vid-sync-volume", stageVolume.value);
-
-function unixtime() {  
-  return Date.now() / 1000;
-}
+// Rendering
 
 function videoItem(id, item) {
   const row = document.createElement("li");
@@ -262,12 +442,14 @@ function videoItem(id, item) {
   url.className = "item-url";
   url.textContent = item.url ?? "";
   url.title = item.url ?? "";
-
-  const index = document.createElement("span");
-  index.className = "item-index";
-  index.textContent = Number.isInteger(item.index) ? String(item.index) : "";
-
   body.append(url);
+
+  if (id && Number.isInteger(item.index)) {
+    const index = document.createElement("span");
+    index.className = "item-index";
+    index.textContent = String(item.index);
+    body.append(index);
+  }
 
   const copy = document.createElement("button");
   copy.type = "button";
@@ -329,86 +511,6 @@ function playButton(row, id) {
   return button;
 }
 
-function renumberQueue() {
-  const items = queuedVideos();
-  for (let i = 0; i < items.length; i++) items[i].index = i + 1;
-}
-
-function playListedVideo(id) {
-  if(!id) return;
-  if(!queue[id]) return;
-  const video = queue[id];
-  videoState.playing = true;
-  videoState.time = unixtime() + 1;
-  video.time = unixtime();
-  setCurrentVideo(video);
-  vidHistory.push(video);
-  saveHistory();
-  delete queue[id];
-  renumberQueue();
-  render();
-  sendAll(null, "Playing new video");
-}
-
-function removeFromQueue(id) {
-  if (!id) return;
-  if(!queue[id]) return;
-  delete queue[id];
-  renumberQueue();
-  render();
-  sendQueue();
-}
-
-
-function saveHistory() {
-  Rtc.getHash().then((hash) => {
-    localStorage.setItem(`vid-sync-history-${hash}`, JSON.stringify(vidHistory));
-  });
-}
-
-function loadHistory() {
-  Rtc.getHash().then((hash) => {
-    const history = localStorage.getItem(`vid-sync-history-${hash}`);
-    if(history) mergeHistory(JSON.parse(history));
-  });
-}
-
-async function hashHistory() {
-  const json = JSON.stringify(vidHistory);
-  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(json));
-  return new Uint8Array(hash).toHex();
-}
-
-async function mergeHistory(newHistory) {
-
-  const startHash = await hashHistory();
-
-  // Append newHistory to vidHistory
-  vidHistory.push(...newHistory);
-
-  // Sort all items by time, descending (most recent first)
-  vidHistory.sort((a, b) => b.time - a.time);
-
-  // Dedupe by video.url and video.time (modifies vidHistory in-place)
-  const seen = new Set();
-  let write = 0;
-  for (let read = 0; read < vidHistory.length; read++) {
-    const item = vidHistory[read];
-    const key = `${item.url}|${item.time}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    vidHistory[write++] = item;
-  }
-  if (write < vidHistory.length) vidHistory.length = write;
-  saveHistory();
-
-  const endHash = await hashHistory();
-
-  if(startHash !== endHash) {
-    sendHistory();
-  }
-}
-
 function copyUrl(url) {
   navigator.clipboard.writeText(url).catch(() => {
     const field = document.createElement("textarea");
@@ -423,190 +525,123 @@ function copyUrl(url) {
   });
 }
 
-function renderList(list, items, removable = false) {
-  const rows = items.map((item) => {
-    const row = videoItem(item[0],item[1], removable, true);
-    if (removable) row.draggable = true;
+function renderList(list, entries, draggable = false) {
+  const rows = entries.map(([id, item]) => {
+    const row = videoItem(id, item);
+    if (draggable) row.draggable = true;
     return row;
   });
   list.replaceChildren(...rows);
 }
 
 function renderNowPlaying() {
-  nowPlayingList.replaceChildren(...(videoState.video ? [videoItem(null,videoState.video)] : []));
+  nowPlayingList.replaceChildren(...(videoState.video ? [videoItem(null, videoState.video)] : []));
 }
 
 function render() {
   renderNowPlaying();
   renderList(queueList, queuedIdVideos(), true);
-  renderList(historyList, vidHistory.map((item) => [null,item.url]));
+  renderList(historyList, vidHistory.map((item) => [null, item]));
 }
 
-function setCurrentVideo(video) {
-  videoState.video = video;
-  if(!player || player.src !== videoState.video?.url) {
-    player = createHtmlPlayer(stage, videoState.video?.url);
-    player.onloaded = () => {
-      player.setTime(0);
-      player.pause();
-      setTimeout(() => {
-          if(videoState.playing) {
-            player.setTime(unixtime() - videoState.time);
-            player.play();
-          } else {
-            player.pause();
-            player.setTime(videoState.time);
-          }
-      },1000);
-      console.log("video loaded");
-      player.setVolume(localStorage.getItem("vid-sync-volume") || 1);
-    };
-    // player.onPause = () => {
-    //   videoState.time = player.getTime();
-    //   videoState.playing = false;
-    //   sendState(null,"Video Paused");
-    // };
-    // player.onPlay = () => {
-    //   videoState.time =  unixtime() - player.getTime();
-    //   videoState.playing = true;
-    //   sendState(null,"Video Played");
-    // };
-    player.ontimeupdate = (time) => {
-      stageTimeline.value = (time / player.getLength()) * 100;
-    };
-    // player.onSetTime = (time) => {
-    //   if(videoState.playing) {
-    //       videoState.time =  unixtime() - time;
-    //   } else {
-    //       videoState.time = time;
-    //   }
-    //   sendState(null,"Video Time Set");
-    // };
-  } else {
+// Messaging
 
+function send(peer, name, blob, reason) {
+  if (!Rtc.getSession()) return;
+  if (reason) console.log(`Sending ${name}:`, reason);
+  try {
+    if (peer) Rtc.send(peer.id, "", name, blob);
+    else Rtc.sendAll("", name, blob);
+  } catch (error) {
+    console.warn(`Could not send ${name}:`, error);
   }
 }
 
-function sendAll(peer = null, reason) {
-    sendState(peer, reason);
-    sendQueue(peer, reason);
-    sendHistory(peer, reason);
-}
-
 function sendState(peer, reason) {
-    if(reason) console.log("Sending state", reason);
-    if(peer) Rtc.send(peer.id, "", "state", videoState);
-    else Rtc.sendAll("","state", videoState);
-    debug();
+  send(peer, "state", videoState, reason);
 }
 
 function sendQueue(peer, reason) {
-    if(reason) console.log("Sending queue", reason);
-    if(peer) Rtc.send(peer.id, "", "queue", queue);
-    else Rtc.sendAll("","queue", queue);
+  send(peer, "queue", queue, reason);
 }
 
 function sendHistory(peer, reason) {
-    if(reason) console.log("Sending history", reason);
-    if(peer) Rtc.send(peer.id, "", "history", vidHistory);
-    else Rtc.sendAll("","history", vidHistory);
+  send(peer, "history", vidHistory, reason);
+}
+
+function sendAll(peer, reason) {
+  sendState(peer, reason);
+  sendQueue(peer, reason);
+  sendHistory(peer, reason);
+}
+
+function receiveConnect(peer, blob) {
+  const peerLaunch = Number(blob?.launch) || Number.MAX_VALUE;
+  peerLaunches[peer.id] = peerLaunch;
+  if (peerLaunch > launch) sendAll(peer, "Peer is newer");
+}
+
+function receiveState(state) {
+  if (!state || typeof state !== "object") return;
+  videoState.playing = Boolean(state.playing);
+  videoState.time = Number(state.time) || 0;
+  setCurrentVideo(state.video ?? null);
+}
+
+function receiveQueue(blob) {
+  replaceQueue(asQueue(blob));
+  render();
+}
+
+function receiveHistory(peer, items) {
+  if (!Array.isArray(items)) return;
+  if (mergeHistory(items)) {
+    saveHistory();
+    render();
+  }
+  if (vidHistory.length > items.length) sendHistory(peer, "Peer is missing history");
 }
 
 Rtc.onMessage((message) => {
-  console.log("Message:", message);
-    switch (message.name) {
-        case "log":
-            console.log(message);
-            break;
-        case "connect":
-            const peerLaunch = message.blob.launch || Number.MAX_VALUE;
-            if (peerLaunch > launch) {
-                console.log("Peer is newer, sending state");
-                sendAll(message.peer);
-            }
-            break;
-        case "state":
-            console.log("GOT STATE:", message.blob);
-            videoState.playing = message.blob.playing;
-            videoState.time = message.blob.time;
-            if(videoState.video?.url !== message.blob.video?.url) {
-                setCurrentVideo(message.blob.video);
-            } else {
-                liveVideoUpdate();
-            }
-            break;
-        case "queue":
-            const newQueue = asQueue(message.blob);
-            for (const [id, item] of Object.entries(newQueue)) {
-                queue[id] = item;
-            }
-            for (const key of Object.keys(queue)) {
-                if(!newQueue[key]) {
-                    delete queue[key];
-                }
-            }
-            render();
-            break;
-        case "history":
-            if(!Array.isArray(message.blob)) return;
-            const newHistory = message.blob;
-            
-            //vidHistory = message.blob;
-            break;
-        case "text":
-            area.value = message.blob.text;
-            last = area.value;
-            break;
-    }
-
+  switch (message.name) {
+    case "connect":
+      receiveConnect(message.peer, message.blob);
+      break;
+    case "state":
+      receiveState(message.blob);
+      break;
+    case "queue":
+      receiveQueue(message.blob);
+      break;
+    case "history":
+      receiveHistory(message.peer, message.blob);
+      break;
+  }
 });
 
 Rtc.onPeerConnect((peer) => {
-    console.log("Peer connected:", peer);
-    Rtc.send(peer.id, "", "connect", { launch });
+  send(peer, "connect", { launch });
 });
 
 Rtc.onPeerDisconnect((peer) => {
-    console.log("Peer disconnected:", peer);
+  delete peerLaunches[peer.id];
 });
 
 Rtc.onSessionOpen(() => {
+  clearInterval(playTimer);
+  playTimer = setInterval(tick, 5000);
+  vidHistory.length = 0;
+  render();
   loadHistory();
 });
 
-function liveVideoUpdate() {
-    if(videoState.playing) {
-        if(!player.isPlaying) {
-            player.play();
-        } else {
-            const time =  unixtime() - videoState.time;
-            if(Math.abs(time - player.getTime()) > 5) {
-                player.setTime(time + 1);
-            }
-        }
-    } else {
-        if(!player.isPaused) {
-            player.pause();
-        }
-        player.setTime(videoState.time);
-    }
-}
+Rtc.onSessionClose(() => {
+  clearInterval(playTimer);
+  playTimer = null;
+  for (const id of Object.keys(peerLaunches)) delete peerLaunches[id];
+});
 
-function takeNextQueuedVideo() {
-  if(!player.ended) return false;
-  if(!hasQueuedVideos()) return false;
-  const [id, next] = queuedIdVideos()[0];
-  if(!next) return true;
-  playListedVideo(id);
-  return true;
-}
-
-function tick() {
-  if(takeNextQueuedVideo()) return;
-  liveVideoUpdate();
-}
-
-let dragIndex = null;
+// Queue drag and drop
 
 function queueInsertIndex(clientY) {
   const rows = [...queueList.children];
@@ -623,17 +658,6 @@ function markQueueDrop(insertAt) {
   if (!rows.length) return;
   if (insertAt >= rows.length) rows[rows.length - 1].classList.add("drop-after");
   else rows[insertAt].classList.add("drop-before");
-}
-
-function reorderQueue(from, to) {
-  if (to > from) to -= 1;
-  if (from === to) return;
-  const items = queuedVideos();
-  const [item] = items.splice(from, 1);
-  items.splice(to, 0, item);
-  for (let i = 0; i < items.length; i++) items[i].index = i + 1;
-  render();
-  sendQueue();
 }
 
 queueList.addEventListener("dragstart", (event) => {
@@ -671,6 +695,7 @@ queueList.addEventListener("dragend", () => {
   }
 });
 
+// Tabs
 
 function selectTab(tab) {
   for (const item of tabs) {
@@ -697,17 +722,7 @@ for (const tab of tabs) {
   });
 }
 
-function debug() {
-    console.log("Debug:", videoState);
-}
-
-render();
-
-const addButton = document.getElementById("queue-add");
-const addDialog = document.getElementById("queue-add-dialog");
-const addForm = document.getElementById("queue-add-form");
-const urlInput = document.getElementById("queue-url");
-const urlError = document.getElementById("queue-url-error");
+// Add dialog
 
 function isUrl(value) {
   try {
@@ -722,6 +737,7 @@ function showUrlError(message) {
   urlError.hidden = false;
   urlError.textContent = message;
   urlInput.setAttribute("aria-invalid", "true");
+  urlInput.focus();
 }
 
 function clearUrlError() {
@@ -730,7 +746,7 @@ function clearUrlError() {
 }
 
 addButton.addEventListener("click", () => {
-  if(!Rtc.getSession()) return;
+  if (!Rtc.getSession()) return;
   addForm.reset();
   clearUrlError();
   addDialog.showModal();
@@ -739,58 +755,14 @@ addButton.addEventListener("click", () => {
 
 urlInput.addEventListener("input", clearUrlError);
 
-function newID() {
-  let id = crypto.randomUUID().slice(0, 8);
-  while(queue[id]) {
-    id = crypto.randomUUID().slice(0, 8);
-  }
-  return id;
-}
-
-function addVideoToQueue(url) {
-  const items = queuedVideos();
-  const last = items[items.length - 1];
-  const index = last ? last.index + 1 : 1;
-  const id = newID();
-  queue[id] = { index, url, thumb: "", time: unixtime() };
-}
-
-function addVideosToQueue(urls) {
-  for (const url of urls) {
-    addVideoToQueue(url);
-  }
-  if(!videoState.video) {
-    console.log("Playing new video");
-    playListedVideo(queuedIdVideos()[0][0]);
-  } else {
-    console.log("Video playing, not playing new video");
-  }
-  render();
-  addForm.reset();
-  addDialog.close();
-  queueList.lastElementChild?.scrollIntoView({ block: "nearest" });
-}
-
 addForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const urls = urlInput.value.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-  if (!urls.length) {
-    showUrlError("Invalid URL");
-    urlInput.focus();
-    return;
-  }
+  if (!urls.length) return showUrlError("Invalid URL");
   const seen = new Set(Object.values(queue).map((item) => item.url));
   for (const url of urls) {
-    if (!isUrl(url)) {
-      showUrlError("Invalid URL");
-      urlInput.focus();
-      return;
-    }
-    if (seen.has(url)) {
-      showUrlError("URL already in queue");
-      urlInput.focus();
-      return;
-    }
+    if (!isUrl(url)) return showUrlError("Invalid URL");
+    if (seen.has(url)) return showUrlError("URL already in queue");
     seen.add(url);
   }
   clearUrlError();
@@ -800,3 +772,7 @@ addForm.addEventListener("submit", (event) => {
 addDialog.querySelector(".dialog-cancel").addEventListener("click", () => {
   addDialog.close();
 });
+
+stageVolume.value = storedVolume();
+setCurrentVideo(videoState.video);
+render();

@@ -140,6 +140,14 @@ h1,
     flex: 1;
 }
 
+.stage-clock {
+    flex: none;
+    color: var(--text);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+}
+
 .stage-volume-group {
     flex: none;
     display: flex;
