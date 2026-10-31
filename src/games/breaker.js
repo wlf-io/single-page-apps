@@ -1,6 +1,9 @@
 const COLS = 8;
 const LIVES = 3;
+const BOARD_W = 600;
+const BOARD_H = 800;
 const BRICK = Object.freeze({
+    WALL: -1,
     DEAD: 0,
     HIT_1: 1,
     HIT_2: 2,
@@ -12,6 +15,7 @@ const BRICK = Object.freeze({
 
 const BRICK_NEXT = Object.freeze({
     [BRICK.DEAD]: BRICK.DEAD,
+    [BRICK.WALL]: BRICK.WALL,
     [BRICK.HIT_1]: BRICK.DEAD,
     [BRICK.HIT_2]: BRICK.HIT_1,
     [BRICK.HIT_3]: BRICK.HIT_2,
@@ -38,19 +42,28 @@ let userLevels = false;
 
 const LEVELS = [
     [
-        [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
-        [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
-        [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
-        [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
-        [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
+        BRICK.HIT_1,
+        BRICK.HIT_1,
+        BRICK.HIT_1,
+        BRICK.HIT_1,
+        BRICK.HIT_1,
+        BRICK.HIT_1,
+    ],
+    [
+        BRICK.HIT_1,
+        BRICK.HIT_2,
+        BRICK.HIT_3,
+        BRICK.HIT_2,
+        BRICK.HIT_1,
+        [BRICK.DEAD, BRICK.DEAD, BRICK.WALL, BRICK.WALL, BRICK.WALL, BRICK.WALL, BRICK.DEAD, BRICK.DEAD],
     ],
     [
         [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
         [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
         [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
+        [BRICK.HIT_1, BRICK.HIT_1, BRICK.WALL, BRICK.WALL, BRICK.WALL, BRICK.WALL, BRICK.HIT_1, BRICK.HIT_1],
         [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
-        [BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1, BRICK.HIT_1],
-        [BRICK.HIT_2, BRICK.HIT_2, BRICK.HIT_2, BRICK.HIT_2, BRICK.HIT_2, BRICK.HIT_2, BRICK.HIT_2, BRICK.HIT_2],
+        [BRICK.HIT_3, BRICK.HIT_3, BRICK.HIT_3, BRICK.HIT_3, BRICK.HIT_3, BRICK.HIT_3, BRICK.HIT_3, BRICK.HIT_3],
     ]
 ];
 
@@ -68,7 +81,7 @@ function levelLayout(levelNumber) {
     if (!source) {
         return Array.from({ length: ROWS }, () => Array(COLS).fill(BRICK.HIT_1));
     }
-    return source.map((row) => row.slice());
+    return source.map((row) => Array.isArray(row) ? row.slice() : Array(COLS).fill(row));
 }
 
 let bricks = levelLayout(1);
@@ -115,10 +128,10 @@ function paddleLeft() {
 }
 
 function brickRect(col, row) {
-    const marginX = Math.max(10, width * 0.04);
+    const marginX = Math.max(10, width * 0.03);
     const marginY = Math.max(10, height * 0.05);
-    const gapWant = Math.max(3, Math.min(8, width * 0.012));
-    const bhWant = Math.max(8, Math.min(22, height * 0.032));
+    const gapWant = Math.max(2, Math.min(5, width * 0.007));
+    const bhWant = Math.max(10, Math.min(26, height * 0.038));
     const limit = paddleTop() - Math.max(16, height * 0.05);
     const rows = Math.max(1, bricks.length);
     const spanWant = rows * bhWant + (rows - 1) * gapWant;
@@ -231,7 +244,7 @@ function nextLevel() {
 }
 
 function cleared() {
-    return bricks.every((row) => row.every((cell) => cell === BRICK.DEAD));
+    return bricks.every((row) => row.every((cell) => cell <= BRICK.DEAD));
 }
 
 function resolveBrick(rect) {
@@ -262,10 +275,12 @@ function collideBricks() {
             const rect = brickRect(col, row);
             if (!circleHitsRect(ball.x, ball.y, r, rect)) continue;
             bricks[row][col] = BRICK_NEXT[type] ?? BRICK.DEAD;
-            score += ROW_POINTS[row] ?? Math.max(5, 50 - row * 5);
-            updateHud();
             resolveBrick(rect);
-            if (cleared()) win();
+            if(type !== BRICK.WALL) {
+                score += ROW_POINTS[row] ?? Math.max(5, 50 - row * 5);
+                updateHud();
+                if (cleared()) win();
+            }
             return;
         }
     }
@@ -325,20 +340,59 @@ function step(dt) {
 }
 
 function drawBrick(type, rect, row) {
+    let radius = 4;
+    let lineWidth = 2;
+    let dashed = false;
+    let color = "#1a222c";
     switch (type) {
-        case BRICK.DEAD:
-            return;
         case BRICK.HIT_1:
         case BRICK.HIT_2:
         case BRICK.HIT_3:
         case BRICK.HIT_4:
         case BRICK.HIT_5:
-            ctx.fillStyle = ROW_COLORS[row % ROW_COLORS.length];
-            ctx.beginPath();
-            ctx.roundRect(rect.x, rect.y, rect.w, rect.h, 4);
-            ctx.fill();
+        case BRICK.HIT_6:
+            color = ROW_COLORS[row % ROW_COLORS.length];
+            break;
+        case BRICK.WALL:
+            radius = 0;
+            break;
+        default:
             return;
     }
+
+    const corner = Math.min(radius, rect.w / 2, rect.h / 2);
+    const pad = dashed ? 0 : 0;
+    const fillW = rect.w - pad * 2;
+    const fillH = rect.h - pad * 2;
+    if (fillW <= 0 || fillH <= 0) return;
+    ctx.beginPath();
+    ctx.roundRect(
+        rect.x + pad,
+        rect.y + pad,
+        fillW,
+        fillH,
+        Math.max(0, Math.min(corner, fillW / 2, fillH / 2) - (dashed ? pad : 0))
+    );
+    ctx.fillStyle = color;
+    ctx.fill();
+
+    const inset = lineWidth / 4;
+    ctx.beginPath();
+    ctx.roundRect(
+        rect.x + inset,
+        rect.y + inset,
+        rect.w - (lineWidth / 2),
+        rect.h - (lineWidth / 2),
+        Math.max(0, corner - inset)
+    );
+    ctx.save();
+    ctx.strokeStyle = "#0f1419";
+    ctx.lineWidth = lineWidth;
+    ctx.lineJoin = radius ? "round" : "miter";
+    ctx.lineCap = "butt";
+    ctx.setLineDash(dashed ? (lineWidth > 2 ? [8, 6] : [4, 4]) : []);
+    ctx.stroke();
+    ctx.restore();
 }
 
 function draw() {
@@ -389,31 +443,18 @@ function restart() {
 
 function resize() {
     const rect = canvas.getBoundingClientRect();
-    const nextW = rect.width;
-    const nextH = rect.height;
-    if (nextW < 2 || nextH < 2) return;
+    if (rect.width < 2 || rect.height < 2) return;
 
-    const dpr = Math.min(window.devicePixelRatio || 1, 3);
-    canvas.width = Math.round(nextW * dpr);
-    canvas.height = Math.round(nextH * dpr);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (canvas.width !== BOARD_W || canvas.height !== BOARD_H) {
+        canvas.width = BOARD_W;
+        canvas.height = BOARD_H;
+    }
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
 
-    const prevW = width;
-    const prevH = height;
-    width = nextW;
-    height = nextH;
-
-    if (prevW && phase === "cleared") {
-        ball.x *= nextW / prevW;
-        ball.y *= nextH / prevH;
-        clampPaddle(paddleCenter * (nextW / prevW));
-    } else if (prevW && phase === "play" && !ball.stuck) {
-        ball.x *= nextW / prevW;
-        ball.y *= nextH / prevH;
-        clampPaddle(paddleCenter * (nextW / prevW));
-        setVelocity(Math.atan2(ball.vy, ball.vx));
-    } else {
-        clampPaddle(prevW ? paddleCenter * (nextW / prevW) : nextW / 2);
+    if (!width) {
+        width = BOARD_W;
+        height = BOARD_H;
+        clampPaddle(BOARD_W / 2);
         stickBall();
     }
     draw();
@@ -421,7 +462,7 @@ function resize() {
 
 function pointerX(event) {
     const rect = canvas.getBoundingClientRect();
-    return event.clientX - rect.left;
+    return (event.clientX - rect.left) * (BOARD_W / rect.width);
 }
 
 function moveFromPointer(event) {
